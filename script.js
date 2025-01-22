@@ -23,9 +23,14 @@ try {
       const start = Date.now();
       console.log("start: ", start);
       console.log("file inside checksum func: ", file);
-      const arrayBuffer = await file.arrayBuffer();
+      const arrayBuffer = file.arrayBuffer();
       console.log("arraybuffer: ", arrayBuffer);
+      try {
       const hashBuffer = await crypto.subtle.digest('SHA-1', arrayBuffer);
+      }catch (e) {
+        console.error("Error: ", e);
+        return "";
+      }
       console.log("hashBuffer: ", hashBuffer);
       const end = Date.now();
       console.log("end: ", end);
