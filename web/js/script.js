@@ -18,10 +18,11 @@ try {
     });
 
     function fileChecksum(file) {
+      const start = Date.now();
       return new Promise((resolve, reject) => {
-        const totalSegments = 16;
+        const totalSegments = 8;
         const segmentSize = Math.ceil(file.size / totalSegments); // Size of each segment
-        const chunkSize = 1024 * 1024; // 1MB chunks
+        const chunkSize = 1024 * 1024 * 4; // 4MB chunks
         let checksums = new Array(totalSegments).fill(0); // Initialize checksums array
         let currentSegment = 0;
         let offset = 0;
@@ -52,6 +53,8 @@ try {
           } else {
             // Convert checksums to hex strings and join them
             const checksumString = checksums.map(sum => (sum % 256).toString(16).padStart(2, '0')).join('');
+            const end = Date.now(); 
+            console.log("Checksum completed in:", (end - start), "ms");
             resolve(checksumString);
           }
         };
