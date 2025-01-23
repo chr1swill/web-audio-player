@@ -17,30 +17,40 @@ try {
       await processFile(e);
     });
 
-
-    /**@returns{string}*/
+    /**@returns{Promise<string | null>}*/
     async function calculateChecksum(file) {
       const start = Date.now();
+      const reader = new FileReader();
       console.log("start: ", start);
       console.log("file inside checksum func: ", file);
-      const arrayBuffer = await file.arrayBuffer();
-      console.log("arraybuffer: ", arrayBuffer);
 
-      let hashBuffer;
-      try {
-        hashBuffer = await crypto.subtle.digest('SHA-1', arrayBuffer);
-      }catch (e) {
-        console.error("Error: ", e);
-        return "";
-      }
-      console.log("hashBuffer: ", hashBuffer);
-      const end = Date.now();
-      console.log("end: ", end);
-      console.log("time to make hashbuff: ", (end - start));
+      return new Promise(function(resolve, reject) {
+        reader.onload = function(e) {
+          const arrayBuffer = e.target.result;
 
-      const hashArray = Array.from(new Uint8Array(hashBuffer));
-      const checksum = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-      return checksum;
+          crypto.subtle.digest('SHA-1', arrayBuffer).then(function(hashBuffer) {
+
+            console.log("hashBuffer: ", hashBuffer);
+            const end = Date.now();
+            console.log("end: ", end);
+            console.log("time to make hashbuff: ", (end - start));
+
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            const checksum = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            resolve(checksum);
+          }).catch(function(err) {
+            console.error("Error crypto.subtle.digest: ", err);
+            reject(null);
+          });
+        };
+
+        reader.onerror = function(e) {
+          console.error("Error occured reading file to array buffer: ", e.target.error);
+          reject(null);
+        };
+
+        reader.readAsArrayBuffer(file);
+      });
     }
 
     /**@returns {string}*/
@@ -106,7 +116,7 @@ try {
       console.log("file: ", file);
 
       Promise.all([calculateChecksum(file), makeObjUrl(file)]).then(function(results) {
-        const checksum = results[0];
+        const checksum = results[0] === null ? "" : results[0];
         const objUrl = results[1];
         console.log("checksum: ", checksum);
         console.log("objUrl: ", objUrl);
