@@ -103,6 +103,10 @@ try {
       }
     }
 
+    function copyFile(file) {
+      return new File([file], file.name, { type: file.type });
+    }
+
     /**
      * @param{Event}
      * @retuns{void}
@@ -115,7 +119,7 @@ try {
       }
       console.log("file: ", file);
 
-      Promise.all([calculateChecksum(file), makeObjUrl(file)]).then(function(results) {
+      Promise.all([calculateChecksum(copyFile(file)), makeObjUrl(copyFile(file))]).then(function(results) {
         const checksum = results[0] === null ? "" : results[0];
         const objUrl = results[1];
         console.log("checksum: ", checksum);
