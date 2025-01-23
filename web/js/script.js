@@ -23,10 +23,12 @@ try {
       const start = Date.now();
       console.log("start: ", start);
       console.log("file inside checksum func: ", file);
-      const arrayBuffer = file.arrayBuffer();
+      const arrayBuffer = await file.arrayBuffer();
       console.log("arraybuffer: ", arrayBuffer);
+
+      let hashBuffer;
       try {
-      const hashBuffer = await crypto.subtle.digest('SHA-1', arrayBuffer);
+        hashBuffer = await crypto.subtle.digest('SHA-1', arrayBuffer);
       }catch (e) {
         console.error("Error: ", e);
         return "";
@@ -35,6 +37,7 @@ try {
       const end = Date.now();
       console.log("end: ", end);
       console.log("time to make hashbuff: ", (end - start));
+
       const hashArray = Array.from(new Uint8Array(hashBuffer));
       const checksum = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
       return checksum;
