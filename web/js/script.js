@@ -22,7 +22,7 @@ try {
       return new Promise((resolve, reject) => {
         const totalSegments = 8;
         const segmentSize = Math.ceil(file.size / totalSegments); // Size of each segment
-        const chunkSize = 1024 * 1024 * 8; // 4MB chunks
+        const chunkSize = 1024 * 1024 * 8; // 8MB chunks
         let checksums = new Array(totalSegments).fill(0); // Initialize checksums array
         let currentSegment = 0;
         let offset = 0;
