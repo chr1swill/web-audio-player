@@ -17,6 +17,59 @@ try {
       await processFile(e);
     });
 
+    function fileChecksum(file) {
+      return new Promise((resolve, reject) => {
+        const totalSegments = 16;
+        const segmentSize = Math.ceil(file.size / totalSegments); // Size of each segment
+        const chunkSize = 1024 * 1024; // 1MB chunks
+        let checksums = new Array(totalSegments).fill(0); // Initialize checksums array
+        let currentSegment = 0;
+        let offset = 0;
+
+        const reader = new FileReader();
+
+        reader.onload = function(event) {
+          const arrayBuffer = event.target.result;
+          const uint8Array = new Uint8Array(arrayBuffer);
+
+          // Sum the bytes in the current chunk
+          for (let i = 0; i < uint8Array.length; i++) {
+            if (currentSegment < totalSegments) {
+              checksums[currentSegment] += uint8Array[i];
+            }
+          }
+
+          // Move to the next segment if we have filled the current one
+          if (uint8Array.length + offset >= (currentSegment + 1) * segmentSize) {
+            currentSegment++;
+          }
+
+          offset += uint8Array.length;
+
+          // If there are more bytes to read, read the next chunk
+          if (offset < file.size) {
+            readNextChunk();
+          } else {
+            // Convert checksums to hex strings and join them
+            const checksumString = checksums.map(sum => (sum % 256).toString(16).padStart(2, '0')).join('');
+            resolve(checksumString);
+          }
+        };
+
+        reader.onerror = function(event) {
+          reject(new Error("Error reading file: " + event.target.error.code));
+        };
+
+        function readNextChunk() {
+          const slice = file.slice(offset, offset + chunkSize);
+          reader.readAsArrayBuffer(slice);
+        }
+
+        // Start reading the first chunk
+        readNextChunk();
+      });
+    }
+
     /**@returns{Promise<string | null>}*/
     async function calculateChecksum(file) {
       const start = Date.now();
@@ -119,7 +172,7 @@ try {
       }
       console.log("file: ", file);
 
-      Promise.all([calculateChecksum(copyFile(file)),
+      Promise.all([fileChecksum(copyFile(file)),
       makeObjUrl(copyFile(file))]).then(function(results) {
         const [checksum, objUrl] = results;
         console.log("checksum: ", checksum);
