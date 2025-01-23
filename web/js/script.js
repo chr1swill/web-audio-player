@@ -119,9 +119,9 @@ try {
       }
       console.log("file: ", file);
 
-      Promise.all([calculateChecksum(copyFile(file)), makeObjUrl(copyFile(file))]).then(function(results) {
-        const checksum = results[0] === null ? "" : results[0];
-        const objUrl = results[1];
+      Promise.all([calculateChecksum(copyFile(file)),
+      makeObjUrl(copyFile(file))]).then(function(results) {
+        const [checksum, objUrl] = results;
         console.log("checksum: ", checksum);
         console.log("objUrl: ", objUrl);
 
