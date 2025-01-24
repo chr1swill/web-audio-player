@@ -29,8 +29,10 @@ try {
 
     if (audioEl.paused === true) {
       audioEl.play();
+      btnPlayPause.textContent = "||";
     } else {
       audioEl.pause();
+      btnPlayPause.textContent = ">";
     }
   }
 
@@ -105,19 +107,14 @@ try {
     return filename + "-" + checksum;
   }
 
-  function setupDebounceStoreCurrentTime(storageKey, audioEl) {
+  function setupDebounceStoreCurrentTime(storageKey) {
     let tm = null;
     const DEBOUNCE_DURATION = 5000;
 
-    const self = this;
-    self.storageKey = storageKey;
-    self.mediaElement = audioEl;
-
-
     function storeCurrentTime() {
-      const time = self.mediaElement.currentTime;
+      const time = audioEl.currentTime;
       console.log("storing currentTime: ", time);
-      localStorage.setItem(self.storageKey, time.toString());
+      localStorage.setItem(storageKey, time.toString());
     }
 
     function debounce() {
