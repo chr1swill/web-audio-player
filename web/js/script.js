@@ -1,20 +1,38 @@
 try {
+  /**@type{HTMLAudioElement | null}*/
+  let audioEl = null;
+
   const inputEl = document.getElementById("file_picker");
-  const audioEl = document.getElementById("audio");
+  const btnPlayPause = document.getElementById("audio_play_pause");
 
   if (inputEl === null) {
     throw new ReferenceError(
       "Error no element with id: #file_picker");
   }
 
-  if (audioEl === null) {
+  inputEl.onchange = async function(e) {
+    await processFile(e);
+  };
+
+  if (btnPlayPause === null) {
     throw new ReferenceError(
-      "Error no element with id: #audio");
+      "Error no element with id: #audio_play_pause");
   }
 
-  inputEl.addEventListener("change", async function(e) {
-    await processFile(e);
-  });
+  btnPlayPause.setAttribute("disabled", "");
+
+  btnPlayPause.onclick = function(e) {
+    e.preventDefault();
+    if (audioEl === null) {
+      return;
+    }
+
+    if (audioEl.paused === true) {
+      audioEl.play();
+    } else {
+      audioEl.pause();
+    }
+  }
 
   function fileChecksum(file) {
     const start = Date.now();
@@ -72,42 +90,6 @@ try {
     });
   }
 
-  /**@returns{Promise<string | null>}*/
-  async function calculateChecksum(file) {
-    const start = Date.now();
-    const reader = new FileReader();
-    console.log("start: ", start);
-    console.log("file inside checksum func: ", file);
-
-    return new Promise(function(resolve, reject) {
-      reader.onload = function(e) {
-        const arrayBuffer = e.target.result;
-
-        crypto.subtle.digest('SHA-1', arrayBuffer).then(function(hashBuffer) {
-
-          console.log("hashBuffer: ", hashBuffer);
-          const end = Date.now();
-          console.log("end: ", end);
-          console.log("time to make hashbuff: ", (end - start));
-
-          const hashArray = Array.from(new Uint8Array(hashBuffer));
-          const checksum = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-          resolve(checksum);
-        }).catch(function(err) {
-          console.error("Error crypto.subtle.digest: ", err);
-          reject(null);
-        });
-      };
-
-      reader.onerror = function(e) {
-        console.error("Error occured reading file to array buffer: ", e.target.error);
-        reject(null);
-      };
-
-      reader.readAsArrayBuffer(file);
-    });
-  }
-
   /**@returns {string}*/
   async function makeObjUrl(file) {
     return URL.createObjectURL(file);
@@ -123,13 +105,13 @@ try {
     return filename + "-" + checksum;
   }
 
-  function setupDebounceStoreCurrentTime(storageKey, mediaElement) {
+  function setupDebounceStoreCurrentTime(storageKey, audioEl) {
     let tm = null;
     const DEBOUNCE_DURATION = 5000;
 
     const self = this;
     self.storageKey = storageKey;
-    self.mediaElement = mediaElement;
+    self.mediaElement = audioEl;
 
 
     function storeCurrentTime() {
@@ -141,20 +123,20 @@ try {
     function debounce() {
       if (tm) clearTimeout(tm);
 
-      if (mediaElement.paused === false) {
+      if (audioEl.paused === false) {
         storeCurrentTime();
         tm = setTimeout(debounce, DEBOUNCE_DURATION);
       }
     }
 
-    mediaElement.onplay = function() {
+    audioEl.onplay = function() {
       debounce();
     }
-    mediaElement.onpause = function() {
+    audioEl.onpause = function() {
       if (tm) clearTimeout(tm);
       storeCurrentTime();
     }
-    mediaElement.onended = function() {
+    audioEl.onended = function() {
       if (tm) clearTimeout(tm);
       storeCurrentTime();
     }
@@ -168,14 +150,30 @@ try {
   }
 
   function restoreAudioCurrentTime(storageKey, audioEl) {
+    console.log("audioEl.currentTime before: ", audioEl.currentTime);
     const currentTime = localStorage.getItem(storageKey);
     if (currentTime !== null) {
       audioEl.currentTime = parseFloat(currentTime);
     }
-    console.log("audioEl.currentTime: ", audioEl.currentTime);
+    console.log("audioEl.currentTime after: ", audioEl.currentTime);
 
     setupDebounceStoreCurrentTime(storageKey, audioEl);
     console.log("ready to play audio");
+  }
+
+  /**
+   * @param{string} src
+   * @returns{void}
+   */
+  function audioElInit(src) {
+    if (audioEl === null) {
+      audioEl = new Audio(src);
+      console.log("Created audio element: ", audioEl);
+    } else {
+      console.log("Audio element is already initialized: ", audioEl);
+    }
+
+    console.log("Audio element source: ", audioEl.src);
   }
 
   /**
@@ -198,11 +196,11 @@ try {
       const storageKey = makeStorageKey(file.name, checksum);
       console.log("storageKey: ", storageKey);
 
-      audioEl.src = objUrl;
-      console.log("objUrl: ", objUrl);
+      audioElInit(objUrl);
 
       restoreAudioCurrentTime(storageKey, audioEl);
       console.log("Audio is ready to be played! Starting at time: ", audioEl.currentTime);
+      btnPlayPause.removeAttribute("disabled");
 
     }).catch(function(error) {
       console.error(error);
