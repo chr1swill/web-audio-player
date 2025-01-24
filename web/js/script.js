@@ -123,21 +123,26 @@ try {
     return filename + "-" + checksum;
   }
 
-  function debounceStoreCurrentTime(storageKey, mediaElement) {
+  function setupDebounceStoreCurrentTime(storageKey, mediaElement) {
     let tm = null;
     const DEBOUNCE_DURATION = 5000;
 
-    function storeCurrentTime(storageKey, mediaElement) {
-      const time = mediaElement.currentTime;
+    const self = this;
+    self.storageKey = storageKey;
+    self.mediaElement = mediaElement;
+
+
+    function storeCurrentTime() {
+      const time = self.mediaElement.currentTime;
       console.log("storing currentTime: ", time);
-      localStorage.setItem(storageKey, time.toString());
+      localStorage.setItem(self.storageKey, time.toString());
     }
 
     function debounce() {
       if (tm) clearTimeout(tm);
 
       if (mediaElement.paused === false) {
-        storeCurrentTime(storageKey, mediaElement);
+        storeCurrentTime();
         tm = setTimeout(debounce, DEBOUNCE_DURATION);
       }
     }
@@ -147,14 +152,14 @@ try {
     }
     mediaElement.onpause = function() {
       if (tm) clearTimeout(tm);
-      storeCurrentTime(storageKey, mediaElement);
+      storeCurrentTime();
     }
     mediaElement.onended = function() {
       if (tm) clearTimeout(tm);
-      storeCurrentTime(storageKey, mediaElement);
+      storeCurrentTime();
     }
     window.onvisibilitychange = function() {
-      storeCurrentTime(storageKey, mediaElement);
+      storeCurrentTime();
     }
   }
 
@@ -169,7 +174,7 @@ try {
     }
     console.log("audioEl.currentTime: ", audioEl.currentTime);
 
-    debounceStoreCurrentTime(storageKey, audioEl);
+    setupDebounceStoreCurrentTime(storageKey, audioEl);
     console.log("ready to play audio");
   }
 
