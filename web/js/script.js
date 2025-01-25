@@ -2,8 +2,8 @@ try {
   /**@type{HTMLAudioElement | null}*/
   var audioEl = null;
 
-  const inputEl = document.getElementById("file_picker");
-  const btnPlayPause = document.getElementById("audio_play_pause");
+  var inputEl = document.getElementById("file_picker");
+  var btnPlayPause = document.getElementById("audio_play_pause");
 
   if (inputEl === null) {
     throw new ReferenceError(
