@@ -157,7 +157,7 @@ try {
         audioEl.fastSeek(parseInt(currentTime));
       } catch (e) {
         console.error("Error fastSeek: ", e);
-        console.warning("Using fallback, explictly setting HTMLAudioElement.currentTime property");
+        console.warn("Using fallback, explictly setting HTMLAudioElement.currentTime property");
         audioEl.currentTime = parseFloat(currentTime);
       }
       console.log("audioEl.currentTime after: ", audioEl.currentTime);
