@@ -137,6 +137,9 @@ try {
       if (tm) clearTimeout(tm);
       storeCurrentTime();
     }
+    audioEl.ontimeupdate = function() {
+      console.log("Current time updated: ", audioEl.currentTime);
+    }
     window.onvisibilitychange = function() {
       storeCurrentTime();
     }
@@ -150,12 +153,23 @@ try {
     console.log("audioEl.currentTime before: ", audioEl.currentTime);
     const currentTime = localStorage.getItem(storageKey);
     if (currentTime !== null) {
-      audioEl.currentTime = parseFloat(currentTime);
-    }
-    console.log("audioEl.currentTime after: ", audioEl.currentTime);
 
-    setupDebounceStoreCurrentTime(storageKey, audioEl);
-    console.log("ready to play audio");
+      const _tm = setTimeout(function () {
+        clearTimeout(_tm);
+
+        audioEl.currentTime = parseFloat(currentTime);
+        console.log("audioEl.currentTime after: ", audioEl.currentTime);
+
+        setupDebounceStoreCurrentTime(storageKey, audioEl);
+        console.log("ready to play audio");
+      }, 100)
+      
+    } else {
+      console.log("audioEl.currentTime after: ", audioEl.currentTime);
+
+      setupDebounceStoreCurrentTime(storageKey, audioEl);
+      console.log("ready to play audio");
+    }
   }
 
   /**
