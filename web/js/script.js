@@ -21,14 +21,14 @@ try {
 
   btnPlayPause.setAttribute("disabled", "");
 
-  btnPlayPause.onclick = function(e) {
+  btnPlayPause.onclick = async function(e) {
     e.preventDefault();
     if (audioEl === null) {
       return;
     }
 
     if (audioEl.paused === true) {
-      audioEl.play();
+      await audioEl.play();
       btnPlayPause.textContent = "||";
     } else {
       audioEl.pause();
