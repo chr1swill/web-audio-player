@@ -153,23 +153,12 @@ try {
     console.log("audioEl.currentTime before: ", audioEl.currentTime);
     const currentTime = localStorage.getItem(storageKey);
     if (currentTime !== null) {
-
-      const _tm = setTimeout(function () {
-        clearTimeout(_tm);
-
-        audioEl.currentTime = parseInt(currentTime);
-        console.log("audioEl.currentTime after: ", audioEl.currentTime);
-
-        setupDebounceStoreCurrentTime(storageKey, audioEl);
-        console.log("ready to play audio");
-      }, 100)
-      
-    } else {
+      audioEl.fastSeek(parseInt(currentTime));
       console.log("audioEl.currentTime after: ", audioEl.currentTime);
+    } 
 
-      setupDebounceStoreCurrentTime(storageKey, audioEl);
-      console.log("ready to play audio");
-    }
+    setupDebounceStoreCurrentTime(storageKey, audioEl);
+    console.log("ready to play audio");
   }
 
   /**
