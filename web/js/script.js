@@ -149,9 +149,10 @@ try {
     return new File([file], file.name, { type: file.type });
   }
 
-  function restoreAudioCurrentTime(storageKey, audioEl) {
+  function restoreAudioCurrentTime(storageKey) {
     console.log("audioEl.currentTime before: ", audioEl.currentTime);
     const currentTime = localStorage.getItem(storageKey);
+    console.log("currentTime pulled out of storage: ", currentTime);
     if (currentTime !== null) {
       try {
         audioEl.fastSeek(parseInt(currentTime));
@@ -163,7 +164,7 @@ try {
       console.log("audioEl.currentTime after: ", audioEl.currentTime);
     } 
 
-    setupDebounceStoreCurrentTime(storageKey, audioEl);
+    setupDebounceStoreCurrentTime(storageKey);
     console.log("ready to play audio");
   }
 
@@ -204,7 +205,7 @@ try {
 
       audioElInit(objUrl);
 
-      restoreAudioCurrentTime(storageKey, audioEl);
+      restoreAudioCurrentTime(storageKey);
       console.log("Audio is ready to be played! Starting at time: ", audioEl.currentTime);
       btnPlayPause.removeAttribute("disabled");
 
