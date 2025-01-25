@@ -1,6 +1,6 @@
 try {
   /**@type{HTMLAudioElement | null}*/
-  let audioEl = null;
+  var audioEl = null;
 
   const inputEl = document.getElementById("file_picker");
   const btnPlayPause = document.getElementById("audio_play_pause");
