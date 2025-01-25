@@ -179,7 +179,7 @@ try {
    */
   async function processFile(event) {
     const file = event.target.files[0];
-    if (!file || !(file.type = "audio/wav")) {
+    if (!file || !(file.type === "audio/wav")) {
       console.error("Error loading file: please provide a valid .wav file.");
       return;
     }
