@@ -157,7 +157,7 @@ try {
       const _tm = setTimeout(function () {
         clearTimeout(_tm);
 
-        audioEl.currentTime = parseFloat(currentTime);
+        audioEl.currentTime = parseInt(currentTime);
         console.log("audioEl.currentTime after: ", audioEl.currentTime);
 
         setupDebounceStoreCurrentTime(storageKey, audioEl);
