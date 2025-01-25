@@ -153,7 +153,13 @@ try {
     console.log("audioEl.currentTime before: ", audioEl.currentTime);
     const currentTime = localStorage.getItem(storageKey);
     if (currentTime !== null) {
-      audioEl.fastSeek(parseInt(currentTime));
+      try {
+        audioEl.fastSeek(parseInt(currentTime));
+      } catch (e) {
+        console.error("Error fastSeek: ", e);
+        console.warning("Using fallback, explictly setting HTMLAudioElement.currentTime property");
+        audioEl.currentTime = parseFloat(currentTime);
+      }
       console.log("audioEl.currentTime after: ", audioEl.currentTime);
     } 
 
