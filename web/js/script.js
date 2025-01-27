@@ -51,19 +51,19 @@
             return;
         }
         console.log("files: ", file);
-        var fr = new FileReader();
-        fr.onerror = function (e) {
-            console.error("Error occured reading file: ", fr.error);
+        const fileReader = new FileReader();
+        fileReader.onerror = function (e) {
+            console.error("Error occured reading file: ", fileReader.error);
             return;
         };
-        fr.onload = function (e) {
-            const arrayBuffer = fr.result;
+        fileReader.onload = function (e) {
+            const arrayBuffer = fileReader.result;
             console.log("ArrayBuffer: ", arrayBuffer);
             const view = new DataView(arrayBuffer);
             const durationInSeconds = getWavDurationInSeconds(arrayBuffer);
             console.log(`durationInSeconds=${durationInSeconds}`);
             return;
         };
-        fr.readAsArrayBuffer(file);
+        fileReader.readAsArrayBuffer(file);
     };
 })();

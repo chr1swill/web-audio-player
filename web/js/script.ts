@@ -63,15 +63,15 @@
     }
     console.log("files: ", file);
 
-    var fr: FileReader = new FileReader(); 
+    const fileReader: FileReader = new FileReader(); 
 
-    fr.onerror = function(e: Event): void {
-      console.error("Error occured reading file: ", fr!.error);
+    fileReader.onerror = function(e: Event): void {
+      console.error("Error occured reading file: ", fileReader!.error);
       return;
     }
 
-    fr.onload = function(e: Event): void  {
-      const arrayBuffer = fr!.result as ArrayBuffer;
+    fileReader.onload = function(e: Event): void  {
+      const arrayBuffer = fileReader!.result as ArrayBuffer;
       console.log("ArrayBuffer: ", arrayBuffer);
       const view = new DataView(arrayBuffer);
 
@@ -80,6 +80,6 @@
       return;
     }
 
-    fr.readAsArrayBuffer(file);
+    fileReader.readAsArrayBuffer(file);
   };
 })();
