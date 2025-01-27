@@ -65,18 +65,18 @@
 
     var fr: FileReader = new FileReader(); 
 
-    fr.onerror = function(e: Event) {
+    fr.onerror = function(e: Event): void {
       console.error("Error occured reading file: ", fr!.error);
       return;
     }
-    fr.onload = function(e: Event) {
+
+    fr.onload = function(e: Event): void  {
       const arrayBuffer = fr!.result as ArrayBuffer;
       console.log("ArrayBuffer: ", arrayBuffer);
       const view = new DataView(arrayBuffer);
 
       const durationInSeconds = getWavDurationInSeconds(arrayBuffer);
       console.log(`durationInSeconds=${durationInSeconds}`); 
-
       return;
     }
 
