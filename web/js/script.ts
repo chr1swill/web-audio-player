@@ -57,8 +57,8 @@
   inputEl.onchange = function(e: Event): void {
     const file: File | null = 
       inputEl !== null && inputEl.files ? inputEl?.files[0] : null;
-    if (!file || !(file.type.includes("audio/"))) {
-      console.error("Error loading file: please provide a valid .wav file.");
+    if (!file || file.type !== "audio/wav") {
+      console.error("Error loading file: did not receive a valid .wav file.");
       return;
     }
     console.log("files: ", file);
