@@ -85,6 +85,18 @@ function durationToString(d: Duration): string {
   );
 }
 
+function setStateLoading(loadingEl: HTMLParagraphElement): void {
+  loadingEl.textContent = "Loading File content into memory...";
+}
+
+function setStateLoaded(loadingEl: HTMLParagraphElement): void {
+  loadingEl.textContent = "";
+}
+
+function setStateLoadingErr(loadingEl: HTMLParagraphElement, message: string): void {
+  loadingEl.textContent = `Error loading file: ${message}`;
+}
+
 (function main() {
   const inputEl = document.getElementById("file_picker") as HTMLInputElement | null;
   if (inputEl === null) {
@@ -96,6 +108,12 @@ function durationToString(d: Duration): string {
   if (durationEl === null) {
     throw new ReferenceError(
       "Error no element with id: #duration");
+  }
+  
+  const loadingEl = document.getElementById("loading") as HTMLParagraphElement | null;
+  if (loadingEl === null) {
+    throw new ReferenceError(
+      "Error no element with id: #loading");
   }
 
   inputEl.onchange = function(e: Event): void {
@@ -111,10 +129,12 @@ function durationToString(d: Duration): string {
 
     fileReader.onerror = function(e: Event): void {
       console.error("Error occured reading file: ", fileReader!.error);
+      setStateLoadingErr(loadingEl, fileReader!.error!.message);
       return;
     }
 
     fileReader.onload = function(e: Event): void {
+      setStateLoaded(loadingEl);
       const arrayBuffer = fileReader!.result as ArrayBuffer;
       console.log("ArrayBuffer: ", arrayBuffer);
       const view = new DataView(arrayBuffer);
@@ -126,5 +146,6 @@ function durationToString(d: Duration): string {
     }
 
     fileReader.readAsArrayBuffer(file);
+    setStateLoading(loadingEl);
   };
 })();

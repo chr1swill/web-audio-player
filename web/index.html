@@ -11,6 +11,7 @@
         height: 100%;
         margin 0px 0px;
       }
+
       body{
         width: 100%;
         height: 100%;
@@ -35,6 +36,10 @@
         place-content: center;
       }
       label, input { padding: 4px 0px; }
+      p {
+        font-weight: normal;
+        font-size: 16px;
+      }
     </style>
   </head>
   <body>
@@ -43,11 +48,14 @@
     <h1>Audio Player</h1>
     <section>
       <fieldset class="space">
-        <label for="file_picker">Select An Audio File</label>
-        <input name="file_picker" id="file_picker" type="file"/>
+        <p id="loading"></p>
       </fieldset>
       <fieldset class="space">
         <p id="duration"></p>
+      </fieldset>
+      <fieldset class="space">
+        <label for="file_picker">Select An Audio File</label>
+        <input name="file_picker" id="file_picker" type="file"/>
       </fieldset>
     </section>
   </body>
