@@ -12,16 +12,24 @@
     <script>eruda.init();</script> -->
     <h1>Audio Player</h1>
     <section>
-      <fieldset class="space">
+      <div id="time_keeper">
+        <p id="tk_current_time">--:--:--</p>
+        <div id="tk_bar_container">
+          <div id="tk_bar"></div>
+          <div id="tk_cursor"></div>
+        </div>
+        <p id="tk_duration">--:--:--</p>
+      </div>
+      <div class="space">
         <p id="loading"></p>
-      </fieldset>
-      <fieldset class="space">
+      </div>
+      <div class="space">
         <p id="duration"></p>
-      </fieldset>
-      <fieldset class="space">
+      </div>
+      <div class="space">
         <label for="file_picker">Select An Audio File</label>
         <input name="file_picker" id="file_picker" type="file"/>
-      </fieldset>
+      </div>
     </section>
   </body>
 </html>
