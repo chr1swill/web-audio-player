@@ -14,6 +14,27 @@ const (
 func main() {
   mux := http.NewServeMux();
 
+  mux.HandleFunc("/styles.css/", func(w http.ResponseWriter, r *http.Request) {
+    if r.Method != http.MethodGet {
+      log.Printf("Error: Method not allowed\n");
+      http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed);
+      return;
+    }
+
+    fileContent, err := ioutil.ReadFile(path.Join(".", "web", "css", "styles.css"))
+    if err != nil {
+      http.Error(w, "Unable to read css content", http.StatusInternalServerError);
+      return;
+    }
+
+    w.Header().Set("Content-Type", "text/css");
+    _, err = w.Write(fileContent)
+    if err != nil {
+      http.Error(w, "Unable to write response", http.StatusInternalServerError);
+      return;
+    }
+  })
+
   mux.HandleFunc("/script.js/", func(w http.ResponseWriter, r *http.Request) {
     if r.Method != http.MethodGet {
       log.Printf("Error: Method not allowed\n");
