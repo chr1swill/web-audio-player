@@ -68,14 +68,18 @@ function formatAsTime(member) {
 function durationToString(d) {
     return (`${formatAsTime(d.hours)}:${formatAsTime(d.minutes)}:${formatAsTime(d.seconds)}`);
 }
-function setStateLoading(loadingEl) {
-    loadingEl.textContent = "Loading File content into memory...";
+function timeKeeperStateLoading(loaderEl, timeContainerEl) {
+    timeContainerEl.style.display = "none";
+    loaderEl.style.display = "inline";
 }
-function setStateLoaded(loadingEl) {
-    loadingEl.textContent = "";
+function timeKeeperSetTime(currentTimeEl, durationEl, currentTime, duration) {
+    currentTimeEl.textContent = durationToString(currentTime);
+    durationEl.textContent = durationToString(duration);
 }
-function setStateLoadingErr(loadingEl, message) {
-    loadingEl.textContent = `Error loading file: ${message}`;
+function timeKeeperStateLoaded(loaderEl, timeContainerEl, currentTimeEl, durationEl, currentTime, duration) {
+    timeKeeperSetTime(currentTimeEl, durationEl, currentTime, duration);
+    loaderEl.style.display = "none";
+    timeContainerEl.style.display = "inline";
 }
 function getElementById(id) {
     const el = document.getElementById(id);
@@ -88,8 +92,10 @@ function getElementById(id) {
 }
 (function main() {
     const inputEl = getElementById("file_picker");
-    const durationEl = getElementById("duration");
-    const loadingEl = getElementById("loading");
+    const loaderEl = getElementById("tk_loader");
+    const timeContainerEl = getElementById("tk_time_container");
+    const currentTimeEl = getElementById("tk_current_time");
+    const durationEl = getElementById("tk_duration");
     inputEl.onchange = function (e) {
         const file = inputEl.files ? inputEl === null || inputEl === void 0 ? void 0 : inputEl.files[0] : null;
         if (!file || file.type !== "audio/wav") {
@@ -100,20 +106,18 @@ function getElementById(id) {
         const fileReader = new FileReader();
         fileReader.onerror = function (e) {
             console.error("Error occured reading file: ", fileReader.error);
-            setStateLoadingErr(loadingEl, fileReader.error.message);
             return;
         };
         fileReader.onload = function (e) {
-            setStateLoaded(loadingEl);
             const arrayBuffer = fileReader.result;
             console.log("ArrayBuffer: ", arrayBuffer);
             const view = new DataView(arrayBuffer);
             const durationInSeconds = getWavDurationInSeconds(arrayBuffer);
             console.log(`durationInSeconds=${durationInSeconds}`);
-            durationEl.textContent = `${file.name} is ${durationToString(secondsToDuration(durationInSeconds))} long`;
+            timeKeeperStateLoaded(loaderEl, timeContainerEl, currentTimeEl, durationEl, { hours: 0, minutes: 0, seconds: 0 }, secondsToDuration(durationInSeconds));
             return;
         };
         fileReader.readAsArrayBuffer(file);
-        setStateLoading(loadingEl);
+        timeKeeperStateLoading(loaderEl, timeContainerEl);
     };
 })();

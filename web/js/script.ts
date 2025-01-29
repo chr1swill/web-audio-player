@@ -85,16 +85,36 @@ function durationToString(d: Duration): string {
   );
 }
 
-function setStateLoading(loadingEl: HTMLParagraphElement): void {
-  loadingEl.textContent = "Loading File content into memory...";
+function timeKeeperStateLoading(loaderEl: HTMLSpanElement, timeContainerEl: HTMLSpanElement): void {
+  timeContainerEl.style.display = "none";
+  loaderEl.style.display = "inline";
 }
 
-function setStateLoaded(loadingEl: HTMLParagraphElement): void {
-  loadingEl.textContent = "";
+function timeKeeperSetTime(
+  currentTimeEl: HTMLParagraphElement,
+  durationEl: HTMLParagraphElement,
+  currentTime: Duration,
+  duration: Duration
+): void {
+  currentTimeEl.textContent = durationToString(currentTime);
+  durationEl.textContent = durationToString(duration);
 }
 
-function setStateLoadingErr(loadingEl: HTMLParagraphElement, message: string): void {
-  loadingEl.textContent = `Error loading file: ${message}`;
+function timeKeeperStateLoaded(
+  loaderEl: HTMLSpanElement,
+  timeContainerEl: HTMLSpanElement,
+  currentTimeEl: HTMLParagraphElement,
+  durationEl: HTMLParagraphElement,
+  currentTime: Duration,
+  duration: Duration
+): void {
+  timeKeeperSetTime(
+    currentTimeEl, durationEl,
+    currentTime, duration
+  );
+
+  loaderEl.style.display = "none";
+  timeContainerEl.style.display = "inline";
 }
 
 function getElementById(id: string): HTMLElement {
@@ -108,8 +128,10 @@ function getElementById(id: string): HTMLElement {
 
 (function main() {
   const inputEl = getElementById("file_picker") as HTMLInputElement;
-  const durationEl = getElementById("duration") as HTMLParagraphElement;
-  const loadingEl = getElementById("loading") as HTMLParagraphElement;
+  const loaderEl = getElementById("tk_loader") as HTMLSpanElement;
+  const timeContainerEl = getElementById("tk_time_container") as HTMLSpanElement;
+  const currentTimeEl = getElementById("tk_current_time") as HTMLParagraphElement;
+  const durationEl = getElementById("tk_duration") as HTMLParagraphElement;
 
   inputEl.onchange = function(e: Event): void {
     const file: File | null = inputEl.files ? inputEl?.files[0] : null;
@@ -123,23 +145,29 @@ function getElementById(id: string): HTMLElement {
 
     fileReader.onerror = function(e: Event): void {
       console.error("Error occured reading file: ", fileReader!.error);
-      setStateLoadingErr(loadingEl, fileReader!.error!.message);
       return;
     }
 
     fileReader.onload = function(e: Event): void {
-      setStateLoaded(loadingEl);
       const arrayBuffer = fileReader!.result as ArrayBuffer;
       console.log("ArrayBuffer: ", arrayBuffer);
       const view = new DataView(arrayBuffer);
 
       const durationInSeconds = getWavDurationInSeconds(arrayBuffer);
       console.log(`durationInSeconds=${durationInSeconds}`);
-      durationEl.textContent = `${file.name} is ${durationToString(secondsToDuration(durationInSeconds))} long`;
+
+      timeKeeperStateLoaded(
+        loaderEl,
+        timeContainerEl,
+        currentTimeEl,
+        durationEl,
+        { hours: 0, minutes: 0, seconds: 0},
+        secondsToDuration(durationInSeconds)
+      );
       return;
     }
 
     fileReader.readAsArrayBuffer(file);
-    setStateLoading(loadingEl);
+    timeKeeperStateLoading(loaderEl, timeContainerEl);
   };
 })();
