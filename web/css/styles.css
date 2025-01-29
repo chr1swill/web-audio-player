@@ -51,7 +51,7 @@ p {
 }
 
 #time_keeper {
-  width: 100%;
+  min-width: 370px;
   height: 48px;
   background-color: white;
   display: flex;
@@ -68,6 +68,7 @@ p {
 
 #tk_time_container {
   display: flex;
+  gap: 2px;
   flex-direction: row;
   justify-content: center;
   align-items: center;

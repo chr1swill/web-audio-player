@@ -114,7 +114,7 @@ function timeKeeperStateLoaded(
   );
 
   loaderEl.style.display = "none";
-  timeContainerEl.style.display = "inline";
+  timeContainerEl.style.display = "flex";
 }
 
 function getElementById(id: string): HTMLElement {
