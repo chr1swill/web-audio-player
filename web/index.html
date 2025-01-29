@@ -21,11 +21,15 @@
         <p id="tk_duration">--:--:--</p>
       </div> -->
       <div id="time_keeper">
-        <span>
-          <p id="tk_current_time">--:--:--</p>
-          &#47;
-          <p id="tk_duration">--:--:--</p>
-        </span>
+        <div id="tk_loader_time_container">
+          <span id="tk_loader" style="display:none;"></span>
+          <span id="tk_time_container">
+            <p id="tk_current_time">--:--:--</p>
+            &#47;
+            <p id="tk_duration">--:--:--</p>
+          </span>
+        </div>
+
         <div id="tk_bar_container">
           <div id="tk_bar"></div>
           <div id="tk_cursor"></div>
