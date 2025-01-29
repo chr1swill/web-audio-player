@@ -97,33 +97,27 @@ function setStateLoadingErr(loadingEl: HTMLParagraphElement, message: string): v
   loadingEl.textContent = `Error loading file: ${message}`;
 }
 
-(function main() {
-  const inputEl = document.getElementById("file_picker") as HTMLInputElement | null;
-  if (inputEl === null) {
-    throw new ReferenceError(
-      "Error no element with id: #file_picker");
+function getElementById(id: string): HTMLElement {
+  const el = document.getElementById(id);
+  if (el === null) {
+    throw new ReferenceError(`Error no element with id: #${id}`);
+  } else {
+    return el;
   }
+}
 
-  const durationEl = document.getElementById("duration") as HTMLParagraphElement | null;
-  if (durationEl === null) {
-    throw new ReferenceError(
-      "Error no element with id: #duration");
-  }
-  
-  const loadingEl = document.getElementById("loading") as HTMLParagraphElement | null;
-  if (loadingEl === null) {
-    throw new ReferenceError(
-      "Error no element with id: #loading");
-  }
+(function main() {
+  const inputEl = getElementById("file_picker") as HTMLInputElement;
+  const durationEl = getElementById("duration") as HTMLParagraphElement;
+  const loadingEl = getElementById("loading") as HTMLParagraphElement;
 
   inputEl.onchange = function(e: Event): void {
-    const file: File | null =
-      inputEl !== null && inputEl.files ? inputEl?.files[0] : null;
+    const file: File | null = inputEl.files ? inputEl?.files[0] : null;
     if (!file || file.type !== "audio/wav") {
       console.error("Error loading file: did not receive a valid .wav file.");
       return;
     }
-    console.log("files: ", file);
+    console.log("Files: ", file);
 
     const fileReader: FileReader = new FileReader();
 
