@@ -4,7 +4,7 @@ html {
   margin 0px 0px;
 }
 
-body{
+body {
   width: 100%;
   height: 100%;
   overflow: hidden;
@@ -22,22 +22,35 @@ body{
   justify-content: space-between;
 }
 
-.space { margin: 16px 0px; }
+.space {
+  margin: 16px 0px;
+}
 
-section > div, .space {
+section {
+  width: 100%;
+  height: auto;
+  display: grid;
+  place-content: center;
+}
+
+section>div,
+.space {
   border: none;
   display: grid;
   place-content: center;
 }
 
-label, input { padding: 4px 0px; }
+label,
+input {
+  padding: 4px 0px;
+}
 
 p {
   font-weight: normal;
   font-size: 16px;
 }
 
-#time_keeper {
+/*#time_keeper {
   width: 100%;
   height: 48px;
   background-color: white;
@@ -74,6 +87,55 @@ p {
   }
 }
 
-
 #tk_cursor {
+}*/
+
+#time_keeper {
+  width: 100%;
+  height: 48px;
+  background-color: white;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+  align-items: center;
+  border-radius: 32px;
 }
+
+#time_keeper > span {
+  max-width: 50%;
+  height: auto;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+}
+
+#tk_current_time,
+#tk_duration {
+  color: black;
+}
+
+#tk_bar_container {
+  --width: 50%;
+  --height: 8px;
+  --border-radius: 32px;
+  width: var(--width);
+  height: var(--height);
+  background-color: transparent;
+  border: 1px solid black;
+  border-radius: var(--border-radius);
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+
+  & #tk_bar {
+    width: 90%;
+    height: var(--height);
+    border-radius: var(--border-radius);
+    background-color: black;
+  }
+}
+
+
+#tk_cursor {}
