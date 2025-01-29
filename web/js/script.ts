@@ -141,6 +141,16 @@ function getElementById(id: string): HTMLElement {
   const durationEl = getElementById("tk_duration") as HTMLParagraphElement;
   const barEl = getElementById("tk_bar") as HTMLInputElement;
 
+  barEl.onchange = function(e: Event): void {
+    e.preventDefault();
+    if(barEl.hasAttribute("disabled")) {
+      return;
+    } else {
+      // change audio stuff we are playing
+      currentTimeEl.textContent = durationToString(secondsToDuration(parseInt(barEl.value)));
+    }
+  }
+
   inputEl.onchange = function(e: Event): void {
     const file: File | null = inputEl.files ? inputEl?.files[0] : null;
     if (!file || file.type !== "audio/wav") {

@@ -100,6 +100,16 @@ function getElementById(id) {
     const currentTimeEl = getElementById("tk_current_time");
     const durationEl = getElementById("tk_duration");
     const barEl = getElementById("tk_bar");
+    barEl.onchange = function (e) {
+        e.preventDefault();
+        if (barEl.hasAttribute("disabled")) {
+            return;
+        }
+        else {
+            // change audio stuff we are playing
+            currentTimeEl.textContent = durationToString(secondsToDuration(parseInt(barEl.value)));
+        }
+    };
     inputEl.onchange = function (e) {
         const file = inputEl.files ? inputEl === null || inputEl === void 0 ? void 0 : inputEl.files[0] : null;
         if (!file || file.type !== "audio/wav") {
