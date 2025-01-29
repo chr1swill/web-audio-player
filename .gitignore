@@ -2,3 +2,4 @@ audio/
 bin/
 node_modules/
 tmp/
+web/js/script.js
