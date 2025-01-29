@@ -105,13 +105,20 @@ function timeKeeperStateLoaded(
   timeContainerEl: HTMLSpanElement,
   currentTimeEl: HTMLParagraphElement,
   durationEl: HTMLParagraphElement,
+  barEl: HTMLInputElement,
   currentTime: Duration,
-  duration: Duration
+  duration: number 
 ): void {
   timeKeeperSetTime(
-    currentTimeEl, durationEl,
-    currentTime, duration
+    currentTimeEl,
+    durationEl,
+    currentTime,
+    secondsToDuration(duration)
   );
+
+  barEl.removeAttribute("disabled");
+  barEl.max = String(duration);
+  barEl.value = "0";
 
   loaderEl.style.display = "none";
   timeContainerEl.style.display = "flex";
@@ -132,6 +139,7 @@ function getElementById(id: string): HTMLElement {
   const timeContainerEl = getElementById("tk_time_container") as HTMLSpanElement;
   const currentTimeEl = getElementById("tk_current_time") as HTMLParagraphElement;
   const durationEl = getElementById("tk_duration") as HTMLParagraphElement;
+  const barEl = getElementById("tk_bar") as HTMLInputElement;
 
   inputEl.onchange = function(e: Event): void {
     const file: File | null = inputEl.files ? inputEl?.files[0] : null;
@@ -161,8 +169,9 @@ function getElementById(id: string): HTMLElement {
         timeContainerEl,
         currentTimeEl,
         durationEl,
+        barEl,
         { hours: 0, minutes: 0, seconds: 0},
-        secondsToDuration(durationInSeconds)
+        durationInSeconds
       );
       return;
     }

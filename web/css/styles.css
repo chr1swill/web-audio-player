@@ -79,7 +79,7 @@ p {
   color: black;
 }
 
-#tk_bar_container {
+#tk_bar {
   --width: 50%;
   --height: 8px;
   --border-radius: 32px;
@@ -92,14 +92,4 @@ p {
   flex-direction: row;
   justify-content: flex-start;
   align-items: center;
-
-  & #tk_bar {
-    width: 90%;
-    height: var(--height);
-    border-radius: var(--border-radius);
-    background-color: black;
-  }
 }
-
-
-#tk_cursor {}

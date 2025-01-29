@@ -76,8 +76,11 @@ function timeKeeperSetTime(currentTimeEl, durationEl, currentTime, duration) {
     currentTimeEl.textContent = durationToString(currentTime);
     durationEl.textContent = durationToString(duration);
 }
-function timeKeeperStateLoaded(loaderEl, timeContainerEl, currentTimeEl, durationEl, currentTime, duration) {
-    timeKeeperSetTime(currentTimeEl, durationEl, currentTime, duration);
+function timeKeeperStateLoaded(loaderEl, timeContainerEl, currentTimeEl, durationEl, barEl, currentTime, duration) {
+    timeKeeperSetTime(currentTimeEl, durationEl, currentTime, secondsToDuration(duration));
+    barEl.removeAttribute("disabled");
+    barEl.max = String(duration);
+    barEl.value = "0";
     loaderEl.style.display = "none";
     timeContainerEl.style.display = "flex";
 }
@@ -96,6 +99,7 @@ function getElementById(id) {
     const timeContainerEl = getElementById("tk_time_container");
     const currentTimeEl = getElementById("tk_current_time");
     const durationEl = getElementById("tk_duration");
+    const barEl = getElementById("tk_bar");
     inputEl.onchange = function (e) {
         const file = inputEl.files ? inputEl === null || inputEl === void 0 ? void 0 : inputEl.files[0] : null;
         if (!file || file.type !== "audio/wav") {
@@ -114,7 +118,7 @@ function getElementById(id) {
             const view = new DataView(arrayBuffer);
             const durationInSeconds = getWavDurationInSeconds(arrayBuffer);
             console.log(`durationInSeconds=${durationInSeconds}`);
-            timeKeeperStateLoaded(loaderEl, timeContainerEl, currentTimeEl, durationEl, { hours: 0, minutes: 0, seconds: 0 }, secondsToDuration(durationInSeconds));
+            timeKeeperStateLoaded(loaderEl, timeContainerEl, currentTimeEl, durationEl, barEl, { hours: 0, minutes: 0, seconds: 0 }, durationInSeconds);
             return;
         };
         fileReader.readAsArrayBuffer(file);
