@@ -222,7 +222,7 @@ function setAudioControlsStateDisabled(playBtn: HTMLButtonElement, pauseBtn: HTM
     const fileReader: FileReader = new FileReader();
 
     fileReader.onerror = function(e: Event): void {
-      console.error("Error occured reading file: ", fileReader!.error);
+      console.error("occured reading file: ", fileReader!.error);
       return;
     }
 
@@ -232,6 +232,7 @@ function setAudioControlsStateDisabled(playBtn: HTMLButtonElement, pauseBtn: HTM
         return;
       }
 
+      console.log("before we create the array buffer in fileReader.onload");
       audioArrayBuffer = fileReader.result as ArrayBuffer;
       console.log("audioArrayBuffer: ", audioArrayBuffer);
 
