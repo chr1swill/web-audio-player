@@ -199,6 +199,7 @@ function setAudioControlsStateDisabled(playBtn: HTMLButtonElement, pauseBtn: HTM
   inputEl.onchange = function(e: Event): void {
     setAudioControlsStateDisabled(playBtn, pauseBtn);
     timeKeeperStateLoading(loaderEl, timeContainerEl);
+    console.log("input change event fired");
 
     if (!(inputEl.files) ||
         inputEl.files[0] === null || 
