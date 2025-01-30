@@ -1,4 +1,14 @@
-function getWavDurationInSeconds(wavBuffer: ArrayBuffer): number {
+// @ts-ignore
+const AudioContext = (window.AudioContext || window.webkitAudioContext);
+
+type WaveInfo = {
+  nChannels: number,
+  sampleRate: number,
+  bitsPerSample: number,
+  durationInSeconds: number,
+}
+
+function getWavInfo(wavBuffer: ArrayBuffer): WaveInfo {
   const dataView = new DataView(wavBuffer);
 
   const numChannels = dataView.getUint16(22, true); // nChannels byte 22
@@ -44,7 +54,13 @@ function getWavDurationInSeconds(wavBuffer: ArrayBuffer): number {
 
   const duration = dataChunkSize / (sampleRate * numChannels * (bitsPerSample / 8));
 
-  return duration;
+
+  return {
+    nChannels: numChannels,
+    sampleRate: sampleRate,
+    bitsPerSample: bitsPerSample,
+    durationInSeconds: duration,
+  }
 }
 
 type Duration = {
@@ -133,6 +149,16 @@ function getElementById(id: string): HTMLElement {
   }
 }
 
+function setAudioControlsStateReady(playBtn: HTMLButtonElement, pauseBtn: HTMLButtonElement): void {
+  playBtn.removeAttribute("disabled");
+  pauseBtn.removeAttribute("disabled");
+}
+
+function setAudioControlsStateDisabled(playBtn: HTMLButtonElement, pauseBtn: HTMLButtonElement): void {
+  playBtn.setAttribute("disabled", "");
+  pauseBtn.setAttribute("disabled", "");
+}
+
 (function main() {
   const inputEl = getElementById("file_picker") as HTMLInputElement;
   const loaderEl = getElementById("tk_loader") as HTMLSpanElement;
@@ -140,6 +166,20 @@ function getElementById(id: string): HTMLElement {
   const currentTimeEl = getElementById("tk_current_time") as HTMLParagraphElement;
   const durationEl = getElementById("tk_duration") as HTMLParagraphElement;
   const barEl = getElementById("tk_bar") as HTMLInputElement;
+  const playBtn = getElementById("ac_play") as HTMLButtonElement;
+  const pauseBtn = getElementById("ac_pause") as HTMLButtonElement;
+
+  let wavInfo: WaveInfo; 
+
+  let audioContext: AudioContext;
+  let audioBuffer: AudioBuffer;
+  let audioArrayBuffer: ArrayBuffer;
+  let audioFile: File;
+  let sourceNode: AudioBufferSourceNode;
+
+  let isPlaying: boolean = false;
+  let currentOffset: number = 0;
+  let startTime: number = 0;
 
   barEl.onchange = function(e: Event): void {
     e.preventDefault();
@@ -152,12 +192,22 @@ function getElementById(id: string): HTMLElement {
   }
 
   inputEl.onchange = function(e: Event): void {
-    const file: File | null = inputEl.files ? inputEl?.files[0] : null;
-    if (!file || file.type !== "audio/wav") {
-      console.error("Error loading file: did not receive a valid .wav file.");
+    setAudioControlsStateDisabled(playBtn, pauseBtn);
+    timeKeeperStateLoading(loaderEl, timeContainerEl);
+
+    if (!(inputEl.files) ||
+        inputEl.files[0] === null || 
+        inputEl.files[0].type !== "audio/wav"
+       ) {
+         console.error("Error loading file: did not receive a valid .wav file.");
       return;
+    } else {
+      audioFile = inputEl.files[0];
+      console.log("audioFile: ", audioFile);
     }
-    console.log("Files: ", file);
+
+    audioContext = new AudioContext();
+    console.log("audioContext: ", audioContext);
 
     const fileReader: FileReader = new FileReader();
 
@@ -167,12 +217,15 @@ function getElementById(id: string): HTMLElement {
     }
 
     fileReader.onload = function(e: Event): void {
-      const arrayBuffer = fileReader!.result as ArrayBuffer;
-      console.log("ArrayBuffer: ", arrayBuffer);
-      const view = new DataView(arrayBuffer);
+      if (!fileReader.result) {
+        console.error("There was not property 'result' on fileReader obj: ", fileReader);
+        return;
+      }
 
-      const durationInSeconds = getWavDurationInSeconds(arrayBuffer);
-      console.log(`durationInSeconds=${durationInSeconds}`);
+      audioArrayBuffer = fileReader.result as ArrayBuffer;
+      console.log("audioArrayBuffer: ", audioArrayBuffer);
+
+      wavInfo = getWavInfo(audioArrayBuffer);
 
       timeKeeperStateLoaded(
         loaderEl,
@@ -181,12 +234,45 @@ function getElementById(id: string): HTMLElement {
         durationEl,
         barEl,
         { hours: 0, minutes: 0, seconds: 0},
-        durationInSeconds
+        wavInfo.durationInSeconds
       );
+
+      setAudioControlsStateReady(playBtn, pauseBtn);
       return;
     }
 
-    fileReader.readAsArrayBuffer(file);
-    timeKeeperStateLoading(loaderEl, timeContainerEl);
+    fileReader.readAsArrayBuffer(audioFile);
   };
+
+  playBtn.onclick = function(e: Event): void {
+    if (isPlaying === true) {
+      console.log("Already playing");
+      return;
+    }
+    isPlaying = true;
+
+    audioContext = new AudioContext({ sampleRate: wavInfo.sampleRate });
+    const slice = new Float32Array(audioArrayBuffer.slice(0));
+
+    console.log("wavInfo.nChannels: ", wavInfo.nChannels);
+    audioBuffer = audioContext.createBuffer(wavInfo.nChannels, slice.length, wavInfo.sampleRate); 
+    audioBuffer.getChannelData(0).set(slice);
+    console.log("audioBuffer: ", audioBuffer);
+    console.log("audioBuffer.duration: ", audioBuffer.duration);
+
+    sourceNode =  audioContext.createBufferSource();
+    console.log("audioContext.destination: ", audioContext.destination); 
+    sourceNode.buffer = audioBuffer;
+    sourceNode.connect(audioContext.destination);
+    sourceNode.onended = function(e: Event): void {
+      isPlaying = false;
+      console.log("audio should have ended");
+      return;
+    }
+
+    sourceNode.start(0);
+    console.log("audio should be playing");
+  }
+
+  pauseBtn.onclick = function(e: Event): void {}
 })();
