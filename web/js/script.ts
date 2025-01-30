@@ -54,7 +54,6 @@ function getWavInfo(wavBuffer: ArrayBuffer): WaveInfo {
 
   const duration = dataChunkSize / (sampleRate * numChannels * (bitsPerSample / 8));
 
-
   return {
     nChannels: numChannels,
     sampleRate: sampleRate,
@@ -187,6 +186,12 @@ function setAudioControlsStateDisabled(playBtn: HTMLButtonElement, pauseBtn: HTM
       return;
     } else {
       // change audio stuff we are playing
+      // TODO: investigate this formula and how it can be used to update the bar type efficently
+      //
+      // Byte Offset = Time in seconds * Sample Rate * Number of Channels * (Bits per Sample / 8)
+      //
+      // The byte offset is from the data chunk so the address of the data chunk for a file should
+      // be stored in a way the would not require searching for it everytime you want update this value
       currentTimeEl.textContent = durationToString(secondsToDuration(parseInt(barEl.value)));
     }
   }
