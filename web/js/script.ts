@@ -205,7 +205,10 @@ function setAudioControlsStateDisabled(playBtn: HTMLButtonElement, pauseBtn: HTM
         inputEl.files[0] === null || 
         inputEl.files[0].type !== "audio/wav"
        ) {
-         console.error("Error loading file: did not receive a valid .wav file.");
+         console.error("loading file: did not receive a valid .wav file.");
+         console.log(`inputEl.files=(${inputEl.files})`);
+         console.log(`inputEl.files[0]=(${!inputEl.files || inputEl.files[0] === null ? null : inputEl.files[0]})`);
+         console.log(`inputEl.files[0].type=(${!inputEl.files || !inputEl.files[0] || !inputEl.files[0].type ? null : inputEl.files[0].type})`);
       return;
     } else {
       audioFile = inputEl.files[0];
