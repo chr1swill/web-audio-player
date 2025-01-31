@@ -180,6 +180,8 @@ class ChunkedAudioPlayer {
   private playBtn = getElementById("ac_play") as HTMLButtonElement;
   private pauseBtn = getElementById("ac_pause") as HTMLButtonElement ;
 
+  private isPlaying = false;
+
   private static audioFile: File;
   private static audioCtx: AudioContext;
 
@@ -235,7 +237,64 @@ class ChunkedAudioPlayer {
     }
 
     self.playBtn.onclick = function(e: Event): void {
-      const currentTime = parseInt(self.scrollBar.value.trim() === "" ? "0" : self.scrollBar.value);
+      if (!self.wavInfo) {
+        console.error("self.wavInfo does not exist");
+        self.isPlaying = false;
+        return;
+      }
+
+      if (self.isPlaying === true) {
+        console.log("self.playBtn click event fired while audio isPlaying === true");
+        return;
+      }
+      self.isPlaying = true;
+
+      const reader = new FileReader();
+      reader.onerror = function(e: Event): void {
+        console.error("reading audio file data to play sound: ", reader.error);
+        self.isPlaying = false;
+        return;
+      }
+      reader.onload = function(e: Event): void {
+        //const currentTime = parseInt(self.scrollBar.value.trim() === "" ? "0" : self.scrollBar.value);
+        if (!self.wavInfo) {
+          console.error("self.wavInfo does not exist");
+          self.isPlaying = false;
+          return;
+        }
+
+        ChunkedAudioPlayer.audioCtx = new AudioContext({ sampleRate: self.wavInfo.sampleRate });
+        const slice = new Float32Array(reader.result as ArrayBuffer);
+        const audioBuffer = ChunkedAudioPlayer.audioCtx.createBuffer(self.wavInfo.nChannels, slice.length, self.wavInfo.sampleRate);
+        console.log(`my calculation of the audioBuffer duration=${chunkDurationInSeconds}, nodesjs answer=${audioBuffer.duration}`);
+        audioBuffer.getChannelData(0).set(slice);
+
+        const source = ChunkedAudioPlayer.audioCtx.createBufferSource();
+        source.buffer = audioBuffer;
+        source.connect(ChunkedAudioPlayer.audioCtx.destination);
+
+        source.onended = function(e: Event): void {
+          self.isPlaying = false;
+          console.log("audio should have ended");
+          return;
+        }
+
+        source.start(0);
+        console.log("audio should be playing");
+      }
+
+      const CHUNK_SIZE = 1024 * 1024;
+      const chunkDurationInSeconds = CHUNK_SIZE / (self.wavInfo.sampleRate * self.wavInfo.nChannels * (self.wavInfo.bitsPerSample / 8));
+
+      //Byte Offset = Time in seconds * Sample Rate * Number of Channels * (Bits per Sample / 8)
+      const chunkByteOffset = chunkDurationInSeconds * self.wavInfo.sampleRate * self.wavInfo.nChannels * (self.wavInfo.bitsPerSample / 8);
+
+      const fileSlice = ChunkedAudioPlayer.audioFile.slice(
+        self.wavInfo.idxOfDataChunkStart + chunkByteOffset, 
+        self.wavInfo.idxOfDataChunkStart + chunkByteOffset + CHUNK_SIZE
+      ); 
+
+      reader.readAsArrayBuffer(fileSlice);
     } 
   }
 }
