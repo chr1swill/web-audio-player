@@ -148,7 +148,7 @@ class TimeKeeper {
   static setTime(currentTime: number, durationInSeconds: number) {
     TimeKeeper.scrollBar.removeAttribute("disabled");
     TimeKeeper.scrollBar.max = String(durationInSeconds);
-    TimeKeeper.scrollBar.value = "0";
+    TimeKeeper.scrollBar.value = String(currentTime);
 
     TimeKeeper.currentTimeEl.textContent = DurationManager.format(DurationManager.new(currentTime));
     TimeKeeper.durationEl.textContent = DurationManager.format(DurationManager.new(durationInSeconds));
@@ -189,6 +189,8 @@ class ChunkedAudioPlayer {
     const self = this;
 
     self.fileInput.onchange = function(e: Event): void {
+      AudioControlsStateManager.ready();
+      TimeKeeper.loadingState();
 
       if(self.fileInput!.files === null ||
          self.fileInput!.files[0] === null ||
@@ -224,9 +226,17 @@ class ChunkedAudioPlayer {
       reader.onload = function(e: Event): void {
         self.wavInfo = getWavInfo(reader.result as ArrayBuffer);
         console.log("self.wavInfo: ", self.wavInfo);
+        AudioControlsStateManager.ready();
+        TimeKeeper.setTime(0, self.wavInfo.durationInSeconds);
+        TimeKeeper.readyState();
       }
+
       reader.readAsArrayBuffer(slice);
     }
+
+    self.playBtn.onclick = function(e: Event): void {
+      const currentTime = parseInt(self.scrollBar.value.trim() === "" ? "0" : self.scrollBar.value);
+    } 
   }
 }
 
