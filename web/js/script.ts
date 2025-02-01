@@ -287,7 +287,6 @@ class ChunkedAudioPlayer {
       const audioBuffer = ChunkedAudioPlayer.audioCtx.createBuffer(self.wavInfo.nChannels, slice.length, self.wavInfo.sampleRate);
       console.log(`audioBuffer.duration=${audioBuffer.duration}`);
       audioBuffer.getChannelData(0).set(slice);
-      console.log(`audioBuffer.duration=${audioBuffer.duration}`);
 
       ChunkedAudioPlayer.source = ChunkedAudioPlayer.audioCtx.createBufferSource();
       ChunkedAudioPlayer.source.buffer = audioBuffer;
