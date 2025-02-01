@@ -174,10 +174,43 @@ class TimeKeeper {
 }
 
 class ChunkedAudioPlayer {
+  private sources: AudioBufferSourceNode[] = []
+  private capacity: Readonly<number>;
+  private length: number = 0;
+  private lastSourceEndTime = 0;
+
+  constructor(capacity: number) {
+    this.capacity = capacity;
+  }
+
+  /**
+   * @param {AudioBufferSourceNode} source - should not have start called but have a buffer set
+   * @param {number} audioDuration - the duaration of the audioBuffer the source holds
+   */
+  public addSource(source: AudioBufferSourceNode, audioDuration: number): void {
+    if (this.length === this.capacity) {
+      console.error("cannot add another source, capacity was hit: ", this.capacity);
+      return;
+    }
+
+    source.onended = (e: Event) => {
+      this.sources.splice(this.sources.indexOf(source), 1);
+      this.length--;
+    }
+
+    source.start(this.lastSourceEndTime)
+    this.lastSourceEndTime += audioDuration;
+
+    this.sources.push(source)
+    this.length++;
+  }
+}
+
+class AudioPlayer {
   private fileInput = getElementById("file_picker") as HTMLInputElement;
 
   private static playBtn = getElementById("ac_play") as HTMLButtonElement;
-  private static pauseBtn = getElementById("ac_pause") as HTMLButtonElement ;
+  private static pauseBtn = getElementById("ac_pause") as HTMLButtonElement;
 
   private isPlaying = false;
 
@@ -191,7 +224,7 @@ class ChunkedAudioPlayer {
     const self = this;
 
     self.fileInput.onchange = function(e: Event): void {
-      ChunkedAudioPlayer.btnStateReady();
+      AudioPlayer.btnStateReady();
       TimeKeeper.loadingState();
 
       if(self.fileInput!.files === null ||
@@ -214,10 +247,10 @@ class ChunkedAudioPlayer {
       return;
       }
 
-      ChunkedAudioPlayer.audioFile = self.fileInput.files[0];
-      console.log("ChunkedAudioPlayer.audioFile: ", ChunkedAudioPlayer.audioFile);
+      AudioPlayer.audioFile = self.fileInput.files[0];
+      console.log("ChunkedAudioPlayer.audioFile: ", AudioPlayer.audioFile);
 
-      const slice = ChunkedAudioPlayer.audioFile.slice(0, 256);
+      const slice = AudioPlayer.audioFile.slice(0, 256);
       const reader = new FileReader();
 
       reader.onerror = function(e: Event): void {
@@ -228,7 +261,7 @@ class ChunkedAudioPlayer {
       reader.onload = function(e: Event): void {
         self.wavInfo = getWavInfo(reader.result as ArrayBuffer);
         console.log("self.wavInfo: ", self.wavInfo);
-        ChunkedAudioPlayer.btnStateReady();
+        AudioPlayer.btnStateReady();
         TimeKeeper.setTime(0, self.wavInfo.durationInSeconds);
         TimeKeeper.readyState();
       }
@@ -236,7 +269,7 @@ class ChunkedAudioPlayer {
       reader.readAsArrayBuffer(slice);
     }
 
-    ChunkedAudioPlayer.playBtn.onclick = function(e: Event): void {
+    AudioPlayer.playBtn.onclick = function(e: Event): void {
       if (self.isPlaying === true) {
         console.log("self.playBtn click event fired while audio isPlaying === true");
         return;
@@ -244,19 +277,19 @@ class ChunkedAudioPlayer {
       self.playBtnClickHanlder(e, self);
     }
 
-    ChunkedAudioPlayer.pauseBtn.onclick = function(e: Event): void {
+    AudioPlayer.pauseBtn.onclick = function(e: Event): void {
       if (self.isPlaying === false) {
         console.log("audio is not playing, cannot pause it.");
         return;
       }
       self.isPlaying = false;
 
-      ChunkedAudioPlayer.source.onended = null;
-      ChunkedAudioPlayer.source.disconnect();
+      AudioPlayer.source.onended = null;
+      AudioPlayer.source.disconnect();
     }
   }
 
-  private playBtnClickHanlder(e: Event, self: ChunkedAudioPlayer): void {
+  private playBtnClickHanlder(e: Event, self: AudioPlayer): void {
     if (!self.wavInfo) {
       console.error("self.wavInfo does not exist");
       self.isPlaying = false;
@@ -280,19 +313,19 @@ class ChunkedAudioPlayer {
         return;
       }
 
-      ChunkedAudioPlayer.audioCtx = new AudioContext({ sampleRate: self.wavInfo.sampleRate });
-      console.log("created new audioContext=", ChunkedAudioPlayer.audioCtx); 
+      AudioPlayer.audioCtx = new AudioContext({ sampleRate: self.wavInfo.sampleRate });
+      console.log("created new audioContext=", AudioPlayer.audioCtx); 
       const slice = new Float32Array(reader.result as ArrayBuffer);
-      console.log("created slice", ChunkedAudioPlayer.audioCtx); 
-      const audioBuffer = ChunkedAudioPlayer.audioCtx.createBuffer(self.wavInfo.nChannels, slice.length, self.wavInfo.sampleRate);
+      console.log("created slice", AudioPlayer.audioCtx); 
+      const audioBuffer = AudioPlayer.audioCtx.createBuffer(self.wavInfo.nChannels, slice.length, self.wavInfo.sampleRate);
       console.log(`audioBuffer.duration=${audioBuffer.duration}`);
       audioBuffer.getChannelData(0).set(slice);
 
-      ChunkedAudioPlayer.source = ChunkedAudioPlayer.audioCtx.createBufferSource();
-      ChunkedAudioPlayer.source.buffer = audioBuffer;
-      ChunkedAudioPlayer.source.connect(ChunkedAudioPlayer.audioCtx.destination);
+      AudioPlayer.source = AudioPlayer.audioCtx.createBufferSource();
+      AudioPlayer.source.buffer = audioBuffer;
+      AudioPlayer.source.connect(AudioPlayer.audioCtx.destination);
 
-      ChunkedAudioPlayer.source.onended = function(e: Event): void {
+      AudioPlayer.source.onended = function(e: Event): void {
         TimeKeeper.incrementCurrentTime();
         //self.isPlaying = false;
         //console.log("audio should have ended");
@@ -301,7 +334,7 @@ class ChunkedAudioPlayer {
         return;
       }
 
-      ChunkedAudioPlayer.source.start();
+      AudioPlayer.source.start();
       console.log("audio should be playing");
     }
 
@@ -327,20 +360,20 @@ class ChunkedAudioPlayer {
     console.log("endIdx=", end);
     console.log("difference=", end - start);
     console.log("difference%4=", (end - start)%4);
-    const fileSlice = ChunkedAudioPlayer.audioFile.slice(start, end); 
+    const fileSlice = AudioPlayer.audioFile.slice(start, end); 
 
     reader.readAsArrayBuffer(fileSlice);
     console.log("reader.readAsArrayBuffer(fileSlice)");
   }
 
   private static btnStateReady(): void {
-    ChunkedAudioPlayer.playBtn.removeAttribute("disabled");
-    ChunkedAudioPlayer.pauseBtn.removeAttribute("disabled");
+    AudioPlayer.playBtn.removeAttribute("disabled");
+    AudioPlayer.pauseBtn.removeAttribute("disabled");
   }
 
   private static btnStateDisabled(): void {
-    ChunkedAudioPlayer.playBtn.setAttribute("disabled", "");
-    ChunkedAudioPlayer.pauseBtn.setAttribute("disabled", "");
+    AudioPlayer.playBtn.setAttribute("disabled", "");
+    AudioPlayer.pauseBtn.setAttribute("disabled", "");
   }
 }
 
@@ -472,5 +505,5 @@ class ChunkedAudioPlayer {
   //}
 
   //pauseBtn.onclick = function(e: Event): void { }
-  const cap = new ChunkedAudioPlayer();
+  const cap = new AudioPlayer();
 })();
