@@ -302,6 +302,17 @@ class ChunkedAudioPlayer {
 
       reader.readAsArrayBuffer(fileSlice);
     } 
+
+    self.pauseBtn.onclick = function(e: Event): void {
+      if (self.isPlaying === false) {
+        console.log("audio is not playing, cannot pause it.");
+        return;
+      }
+      self.isPlaying = false;
+
+      ChunkedAudioPlayer.source.onended = null;
+      ChunkedAudioPlayer.source.disconnect();
+    }
   }
 }
 
