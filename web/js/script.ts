@@ -184,6 +184,7 @@ class ChunkedAudioPlayer {
 
   private static audioFile: File;
   private static audioCtx: AudioContext;
+  private static source: AudioBufferSourceNode;
 
   private wavInfo: WavInfo | null = null;
 
@@ -268,17 +269,17 @@ class ChunkedAudioPlayer {
         console.log(`my calculation of the audioBuffer duration=${chunkDurationInSeconds}, nodesjs answer=${audioBuffer.duration}`);
         audioBuffer.getChannelData(0).set(slice);
 
-        const source = ChunkedAudioPlayer.audioCtx.createBufferSource();
-        source.buffer = audioBuffer;
-        source.connect(ChunkedAudioPlayer.audioCtx.destination);
+        ChunkedAudioPlayer.source = ChunkedAudioPlayer.audioCtx.createBufferSource();
+        ChunkedAudioPlayer.source.buffer = audioBuffer;
+        ChunkedAudioPlayer.source.connect(ChunkedAudioPlayer.audioCtx.destination);
 
-        source.onended = function(e: Event): void {
+        ChunkedAudioPlayer.source.onended = function(e: Event): void {
           self.isPlaying = false;
           console.log("audio should have ended");
           return;
         }
 
-        source.start(0);
+        ChunkedAudioPlayer.source.start(0);
         console.log("audio should be playing");
       }
 
