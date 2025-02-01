@@ -282,8 +282,13 @@ class ChunkedAudioPlayer {
         console.log("audio should be playing");
       }
 
-      const currentTime = parseInt(self.scrollBar.value.trim() === "" ? "0" : self.scrollBar.value);
-      const CHUNK_SIZE = 1024 * 1024 *2;
+      // when I don't add the 0.01 seconds there is a weird poping sound the plays before the audio
+      // anything less then 0.01 and the audio turns into loud static sounds
+      // anything more then audio skips to far forward
+      const SECONDS_TO_SKIP_POP_SOUND = 0.01;
+      const currentTime = (parseInt(self.scrollBar.value.trim() === "" ? "0" : self.scrollBar.value) + SECONDS_TO_SKIP_POP_SOUND); 
+
+      const CHUNK_SIZE = 1024 * 1024;
       const chunkDurationInSeconds = CHUNK_SIZE / (self.wavInfo.sampleRate * self.wavInfo.nChannels * (self.wavInfo.bitsPerSample / 8));
 
       //Byte Offset = Time in seconds * Sample Rate * Number of Channels * (Bits per Sample / 8)
