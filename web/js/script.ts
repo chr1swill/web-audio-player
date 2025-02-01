@@ -263,14 +263,17 @@ class ChunkedAudioPlayer {
       return;
     }
     self.isPlaying = true;
+    console.log("self.isPlaying = true"); 
 
     const reader = new FileReader();
+    console.log("created new reader=", reader); 
     reader.onerror = function(e: Event): void {
       console.error("reading audio file data to play sound: ", reader.error);
       self.isPlaying = false;
       return;
     }
     reader.onload = function(e: Event): void {
+      console.log("reader.onload event fired"); 
       if (!self.wavInfo) {
         console.error("self.wavInfo does not exist");
         self.isPlaying = false;
@@ -278,10 +281,13 @@ class ChunkedAudioPlayer {
       }
 
       ChunkedAudioPlayer.audioCtx = new AudioContext({ sampleRate: self.wavInfo.sampleRate });
+      console.log("created new audioContext=", ChunkedAudioPlayer.audioCtx); 
       const slice = new Float32Array(reader.result as ArrayBuffer);
+      console.log("created slice", ChunkedAudioPlayer.audioCtx); 
       const audioBuffer = ChunkedAudioPlayer.audioCtx.createBuffer(self.wavInfo.nChannels, slice.length, self.wavInfo.sampleRate);
       console.log(`audioBuffer.duration=${audioBuffer.duration}`);
       audioBuffer.getChannelData(0).set(slice);
+      console.log(`audioBuffer.duration=${audioBuffer.duration}`);
 
       ChunkedAudioPlayer.source = ChunkedAudioPlayer.audioCtx.createBufferSource();
       ChunkedAudioPlayer.source.buffer = audioBuffer;
@@ -296,7 +302,7 @@ class ChunkedAudioPlayer {
         return;
       }
 
-      ChunkedAudioPlayer.source.start(0);
+      ChunkedAudioPlayer.source.start();
       console.log("audio should be playing");
     }
 
@@ -325,6 +331,7 @@ class ChunkedAudioPlayer {
     const fileSlice = ChunkedAudioPlayer.audioFile.slice(start, end); 
 
     reader.readAsArrayBuffer(fileSlice);
+    console.log("reader.readAsArrayBuffer(fileSlice)");
   }
 
   private static btnStateReady(): void {
