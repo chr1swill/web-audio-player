@@ -146,39 +146,38 @@ class TimeKeeper {
   }
 
   static setTime(currentTime: number, durationInSeconds: number) {
-    TimeKeeper.scrollBar.removeAttribute("disabled");
+    if (TimeKeeper.scrollBar.hasAttribute("disabled")) {
+      TimeKeeper.scrollBar.removeAttribute("disabled");
+    }
+
     TimeKeeper.scrollBar.max = String(durationInSeconds);
     TimeKeeper.scrollBar.value = String(currentTime);
 
     TimeKeeper.currentTimeEl.textContent = DurationManager.format(DurationManager.new(currentTime));
     TimeKeeper.durationEl.textContent = DurationManager.format(DurationManager.new(durationInSeconds));
   }
-}
 
-class AudioControlsStateManager {
-  private static playBtn = getElementById("ac_play") as HTMLButtonElement;
-  private static pauseBtn = getElementById("ac_pause") as HTMLButtonElement;
-
-  static ready(): void {
-    AudioControlsStateManager.playBtn.removeAttribute("disabled");
-    AudioControlsStateManager.pauseBtn.removeAttribute("disabled");
+  static getCurrentTime(): number {
+    return parseFloat(TimeKeeper.scrollBar.value.trim() === "" ? "0" :  TimeKeeper.scrollBar.value.trim());
   }
 
-  static disabled(): void {
-    AudioControlsStateManager.playBtn.setAttribute("disabled", "");
-    AudioControlsStateManager.pauseBtn.setAttribute("disabled", "");
+  static setCurrentTime(currentTime: number) {
+    TimeKeeper.scrollBar.value = String(currentTime);
+    TimeKeeper.currentTimeEl.textContent = DurationManager.format(DurationManager.new(currentTime));;
+  }
+
+  static incrementCurrentTime() {
+    const n = parseFloat(TimeKeeper.scrollBar.value) + 1;
+    TimeKeeper.scrollBar.value = String(n);
+    TimeKeeper.currentTimeEl.textContent = DurationManager.format(DurationManager.new(n));
   }
 }
 
 class ChunkedAudioPlayer {
   private fileInput = getElementById("file_picker") as HTMLInputElement;
 
-  private scrollBar = getElementById("tk_bar") as HTMLInputElement;
-  private currentTimeEl = getElementById("tk_current_time") as HTMLParagraphElement;
-  private durationEl = getElementById("tk_duration") as HTMLParagraphElement;
-
-  private playBtn = getElementById("ac_play") as HTMLButtonElement;
-  private pauseBtn = getElementById("ac_pause") as HTMLButtonElement ;
+  private static playBtn = getElementById("ac_play") as HTMLButtonElement;
+  private static pauseBtn = getElementById("ac_pause") as HTMLButtonElement ;
 
   private isPlaying = false;
 
@@ -192,7 +191,7 @@ class ChunkedAudioPlayer {
     const self = this;
 
     self.fileInput.onchange = function(e: Event): void {
-      AudioControlsStateManager.ready();
+      ChunkedAudioPlayer.btnStateReady();
       TimeKeeper.loadingState();
 
       if(self.fileInput!.files === null ||
@@ -229,7 +228,7 @@ class ChunkedAudioPlayer {
       reader.onload = function(e: Event): void {
         self.wavInfo = getWavInfo(reader.result as ArrayBuffer);
         console.log("self.wavInfo: ", self.wavInfo);
-        AudioControlsStateManager.ready();
+        ChunkedAudioPlayer.btnStateReady();
         TimeKeeper.setTime(0, self.wavInfo.durationInSeconds);
         TimeKeeper.readyState();
       }
@@ -237,7 +236,7 @@ class ChunkedAudioPlayer {
       reader.readAsArrayBuffer(slice);
     }
 
-    self.playBtn.onclick = function(e: Event): void {
+    ChunkedAudioPlayer.playBtn.onclick = function(e: Event): void {
       if (!self.wavInfo) {
         console.error("self.wavInfo does not exist");
         self.isPlaying = false;
@@ -287,7 +286,7 @@ class ChunkedAudioPlayer {
       // anything less then 0.01 and the audio turns into loud static sounds
       // anything more then audio skips to far forward
       const SECONDS_TO_SKIP_POP_SOUND = 0.01;
-      const currentTime = (parseInt(self.scrollBar.value.trim() === "" ? "0" : self.scrollBar.value) + SECONDS_TO_SKIP_POP_SOUND); 
+      const currentTime = TimeKeeper.getCurrentTime() + SECONDS_TO_SKIP_POP_SOUND; 
 
       const CHUNK_SIZE = 1024 * 1024;
       const chunkDurationInSeconds = CHUNK_SIZE / (self.wavInfo.sampleRate * self.wavInfo.nChannels * (self.wavInfo.bitsPerSample / 8));
@@ -303,7 +302,7 @@ class ChunkedAudioPlayer {
       reader.readAsArrayBuffer(fileSlice);
     } 
 
-    self.pauseBtn.onclick = function(e: Event): void {
+    ChunkedAudioPlayer.pauseBtn.onclick = function(e: Event): void {
       if (self.isPlaying === false) {
         console.log("audio is not playing, cannot pause it.");
         return;
@@ -313,6 +312,16 @@ class ChunkedAudioPlayer {
       ChunkedAudioPlayer.source.onended = null;
       ChunkedAudioPlayer.source.disconnect();
     }
+  }
+
+  private static btnStateReady(): void {
+    ChunkedAudioPlayer.playBtn.removeAttribute("disabled");
+    ChunkedAudioPlayer.pauseBtn.removeAttribute("disabled");
+  }
+
+  private static btnStateDisabled(): void {
+    ChunkedAudioPlayer.playBtn.setAttribute("disabled", "");
+    ChunkedAudioPlayer.pauseBtn.setAttribute("disabled", "");
   }
 }
 
