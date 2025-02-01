@@ -205,6 +205,17 @@ class ChunkedAudioPlayer {
     this.sources.push(source)
     this.length++;
   }
+
+  public reset(): void {
+    for (let i = 0; i < this.sources.length; i++) {
+      this.sources[i].onended = null;
+      this.sources[i].disconnect();
+    }
+
+    this.sources = [];
+    this.length = 0;
+    this.lastSourceEndTime = 0;
+  }
 }
 
 class AudioPlayer {
@@ -217,7 +228,8 @@ class AudioPlayer {
 
   private static audioFile: File;
   private static audioCtx: AudioContext;
-  private static source: AudioBufferSourceNode;
+
+  private static cap: ChunkedAudioPlayer = new ChunkedAudioPlayer(10);
 
   private wavInfo: WavInfo | null = null;
 
@@ -285,8 +297,7 @@ class AudioPlayer {
       }
       self.isPlaying = false;
 
-      AudioPlayer.source.onended = null;
-      AudioPlayer.source.disconnect();
+      AudioPlayer.cap.reset()
     }
   }
 
@@ -299,7 +310,6 @@ class AudioPlayer {
     self.isPlaying = true;
     console.log("self.isPlaying = true"); 
 
-    const cap = new ChunkedAudioPlayer(10);
     AudioPlayer.audioCtx = new AudioContext({ sampleRate: self.wavInfo.sampleRate });
     const startTime = TimeKeeper.getCurrentTime();
 
@@ -327,8 +337,9 @@ class AudioPlayer {
         source.buffer = audioBuffer;
         source.connect(AudioPlayer.audioCtx.destination);
 
-        cap.addSource(source, audioBuffer.duration);
+        AudioPlayer.cap.addSource(source, audioBuffer.duration);
       }
+
       // when I don't add the 0.01 seconds there is a weird poping sound the plays before the audio
       // anything less then 0.01 and the audio turns into loud static sounds
       // anything more then audio skips to far forward
@@ -497,5 +508,5 @@ class AudioPlayer {
   //}
 
   //pauseBtn.onclick = function(e: Event): void { }
-  const cap = new AudioPlayer();
+  const ap = new AudioPlayer();
 })();
