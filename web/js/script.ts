@@ -158,7 +158,7 @@ class TimeKeeper {
   }
 
   static getCurrentTime(): number {
-    return parseFloat(TimeKeeper.scrollBar.value.trim() === "" ? "0" :  TimeKeeper.scrollBar.value.trim());
+    return parseInt(TimeKeeper.scrollBar.value.trim() === "" ? "0" :  TimeKeeper.scrollBar.value.trim());
   }
 
   static setCurrentTime(currentTime: number) {
@@ -237,70 +237,12 @@ class ChunkedAudioPlayer {
     }
 
     ChunkedAudioPlayer.playBtn.onclick = function(e: Event): void {
-      if (!self.wavInfo) {
-        console.error("self.wavInfo does not exist");
-        self.isPlaying = false;
-        return;
-      }
-
       if (self.isPlaying === true) {
         console.log("self.playBtn click event fired while audio isPlaying === true");
         return;
       }
-      self.isPlaying = true;
-
-      const reader = new FileReader();
-      reader.onerror = function(e: Event): void {
-        console.error("reading audio file data to play sound: ", reader.error);
-        self.isPlaying = false;
-        return;
-      }
-      reader.onload = function(e: Event): void {
-        if (!self.wavInfo) {
-          console.error("self.wavInfo does not exist");
-          self.isPlaying = false;
-          return;
-        }
-
-        ChunkedAudioPlayer.audioCtx = new AudioContext({ sampleRate: self.wavInfo.sampleRate });
-        const slice = new Float32Array(reader.result as ArrayBuffer);
-        const audioBuffer = ChunkedAudioPlayer.audioCtx.createBuffer(self.wavInfo.nChannels, slice.length, self.wavInfo.sampleRate);
-        console.log(`my calculation of the audioBuffer duration=${chunkDurationInSeconds}, nodesjs answer=${audioBuffer.duration}`);
-        audioBuffer.getChannelData(0).set(slice);
-
-        ChunkedAudioPlayer.source = ChunkedAudioPlayer.audioCtx.createBufferSource();
-        ChunkedAudioPlayer.source.buffer = audioBuffer;
-        ChunkedAudioPlayer.source.connect(ChunkedAudioPlayer.audioCtx.destination);
-
-        ChunkedAudioPlayer.source.onended = function(e: Event): void {
-          self.isPlaying = false;
-          console.log("audio should have ended");
-          return;
-        }
-
-        ChunkedAudioPlayer.source.start(0);
-        console.log("audio should be playing");
-      }
-
-      // when I don't add the 0.01 seconds there is a weird poping sound the plays before the audio
-      // anything less then 0.01 and the audio turns into loud static sounds
-      // anything more then audio skips to far forward
-      const SECONDS_TO_SKIP_POP_SOUND = 0.01;
-      const currentTime = TimeKeeper.getCurrentTime() + SECONDS_TO_SKIP_POP_SOUND; 
-
-      const CHUNK_SIZE = 1024 * 1024;
-      const chunkDurationInSeconds = CHUNK_SIZE / (self.wavInfo.sampleRate * self.wavInfo.nChannels * (self.wavInfo.bitsPerSample / 8));
-
-      //Byte Offset = Time in seconds * Sample Rate * Number of Channels * (Bits per Sample / 8)
-      const chunkByteOffset = currentTime * self.wavInfo.sampleRate * self.wavInfo.nChannels * (self.wavInfo.bitsPerSample / 8);
-
-      const fileSlice = ChunkedAudioPlayer.audioFile.slice(
-        self.wavInfo.idxOfDataChunkStart + chunkByteOffset, 
-        self.wavInfo.idxOfDataChunkStart + chunkByteOffset + CHUNK_SIZE
-      ); 
-
-      reader.readAsArrayBuffer(fileSlice);
-    } 
+      self.playBtnClickHanlder(e, self);
+    }
 
     ChunkedAudioPlayer.pauseBtn.onclick = function(e: Event): void {
       if (self.isPlaying === false) {
@@ -312,6 +254,77 @@ class ChunkedAudioPlayer {
       ChunkedAudioPlayer.source.onended = null;
       ChunkedAudioPlayer.source.disconnect();
     }
+  }
+
+  private playBtnClickHanlder(e: Event, self: ChunkedAudioPlayer): void {
+    if (!self.wavInfo) {
+      console.error("self.wavInfo does not exist");
+      self.isPlaying = false;
+      return;
+    }
+    self.isPlaying = true;
+
+    const reader = new FileReader();
+    reader.onerror = function(e: Event): void {
+      console.error("reading audio file data to play sound: ", reader.error);
+      self.isPlaying = false;
+      return;
+    }
+    reader.onload = function(e: Event): void {
+      if (!self.wavInfo) {
+        console.error("self.wavInfo does not exist");
+        self.isPlaying = false;
+        return;
+      }
+
+      ChunkedAudioPlayer.audioCtx = new AudioContext({ sampleRate: self.wavInfo.sampleRate });
+      const slice = new Float32Array(reader.result as ArrayBuffer);
+      const audioBuffer = ChunkedAudioPlayer.audioCtx.createBuffer(self.wavInfo.nChannels, slice.length, self.wavInfo.sampleRate);
+      console.log(`audioBuffer.duration=${audioBuffer.duration}`);
+      audioBuffer.getChannelData(0).set(slice);
+
+      ChunkedAudioPlayer.source = ChunkedAudioPlayer.audioCtx.createBufferSource();
+      ChunkedAudioPlayer.source.buffer = audioBuffer;
+      ChunkedAudioPlayer.source.connect(ChunkedAudioPlayer.audioCtx.destination);
+
+      ChunkedAudioPlayer.source.onended = function(e: Event): void {
+        TimeKeeper.incrementCurrentTime();
+        //self.isPlaying = false;
+        //console.log("audio should have ended");
+        console.log("one seconds of audio ended, playing next second");
+        self.playBtnClickHanlder(e, self);
+        return;
+      }
+
+      ChunkedAudioPlayer.source.start(0);
+      console.log("audio should be playing");
+    }
+
+    // when I don't add the 0.01 seconds there is a weird poping sound the plays before the audio
+    // anything less then 0.01 and the audio turns into loud static sounds
+    // anything more then audio skips to far forward
+    const SECONDS_TO_SKIP_POP_SOUND = 0.01;
+    const time = TimeKeeper.getCurrentTime();
+
+    let currentTime: number;
+    if (time !== 0) {
+      currentTime = time; 
+    } else {
+      currentTime = time + SECONDS_TO_SKIP_POP_SOUND; 
+    }
+
+    const ONE_SECOND_CHUNK_SIZE = self.wavInfo.sampleRate * self.wavInfo.nChannels * (self.wavInfo.bitsPerSample / 8);
+    const chunkByteOffset = currentTime * ONE_SECOND_CHUNK_SIZE;
+
+    const start = self.wavInfo.idxOfDataChunkStart + chunkByteOffset;
+    const end = start + ONE_SECOND_CHUNK_SIZE;
+    console.log("startIdx=", start);
+    console.log("endIdx=", end);
+    console.log("difference=", end - start);
+    console.log("difference%4=", (end - start)%4);
+    const fileSlice = ChunkedAudioPlayer.audioFile.slice(start, end); 
+
+    reader.readAsArrayBuffer(fileSlice);
   }
 
   private static btnStateReady(): void {
