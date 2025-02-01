@@ -82,7 +82,7 @@ type Duration = {
 }
 
 class DurationManager {
-  constructor() {}
+  constructor() { }
 
   private static formatAsTime(member: number): string {
     return member < 10 ? member.toString().padStart(2, '0') : member.toString();
@@ -131,7 +131,7 @@ class TimeKeeper {
   private static durationEl = getElementById("tk_duration") as HTMLParagraphElement;
   private static scrollBar = getElementById("tk_bar") as HTMLInputElement;
 
-  constructor() {}
+  constructor() { }
 
   static loadingState(): void {
     TimeKeeper.scrollBar.setAttribute("disabled", "");
@@ -158,7 +158,7 @@ class TimeKeeper {
   }
 
   static getCurrentTime(): number {
-    return parseInt(TimeKeeper.scrollBar.value.trim() === "" ? "0" :  TimeKeeper.scrollBar.value.trim());
+    return parseInt(TimeKeeper.scrollBar.value.trim() === "" ? "0" : TimeKeeper.scrollBar.value.trim());
   }
 
   static setCurrentTime(currentTime: number) {
@@ -233,31 +233,32 @@ class AudioPlayer {
 
   private wavInfo: WavInfo | null = null;
 
-  constructor(){
+  constructor() {
     const self = this;
 
     self.fileInput.onchange = function(e: Event): void {
       AudioPlayer.btnStateReady();
       TimeKeeper.loadingState();
 
-      if(self.fileInput!.files === null ||
-         self.fileInput!.files[0] === null ||
-           self.fileInput!.files[0].type !== "audio/wav" && 
-             self.fileInput!.files[0].type !== "audio/x-wav") {
+      if (self.fileInput!.files === null ||
+        self.fileInput!.files[0] === null ||
+        self.fileInput!.files[0].type !== "audio/wav" &&
+        self.fileInput!.files[0].type !== "audio/x-wav"
+      ) {
         console.error("loading file: did not receive a valid .wav file.");
-      console.log(`self.fileInput.files=(${self.fileInput.files})`);
-      console.log(
-        `self.fileInput.files[0]=(${!self.fileInput.files ||
-                                  self.fileInput.files[0] === null ? null :
-                                  self.fileInput.files[0]})`
-      );
-      console.log(
-        `self.fileInput.files[0].type=(${!self.fileInput.files ||
-                                       !self.fileInput.files[0] ||
-                                       !self.fileInput.files[0].type ? null :
-                                       self.fileInput.files[0].type})`
-      );
-      return;
+        console.log(`self.fileInput.files=(${self.fileInput.files})`);
+        console.log(
+          `self.fileInput.files[0]=(${!self.fileInput.files ||
+            self.fileInput.files[0] === null ? null :
+            self.fileInput.files[0]})`
+        );
+        console.log(
+          `self.fileInput.files[0].type=(${!self.fileInput.files ||
+            !self.fileInput.files[0] ||
+            !self.fileInput.files[0].type ? null :
+            self.fileInput.files[0].type})`
+        );
+        return;
       }
 
       AudioPlayer.audioFile = self.fileInput.files[0];
@@ -308,13 +309,12 @@ class AudioPlayer {
       return;
     }
     self.isPlaying = true;
-    console.log("self.isPlaying = true"); 
+    console.log("self.isPlaying = true");
 
     AudioPlayer.audioCtx = new AudioContext({ sampleRate: self.wavInfo.sampleRate });
     const startTime = TimeKeeper.getCurrentTime();
 
-
-    for (let i = 0; i < /*(startTime - self.wavInfo.durationInSeconds)*/ 10; i++) {
+    for (let i = 0; i < /*(self.wavInfo.durationInSeconds - startTime)*/ 10; i++) {
       const reader = new FileReader();
       reader.onerror = function(e: Event): void {
         console.error("reading audio file data to play sound: ", reader.error);
@@ -348,9 +348,9 @@ class AudioPlayer {
 
       let currentTime: number;
       if (time !== 0) {
-        currentTime = time; 
+        currentTime = time;
       } else {
-        currentTime = time + SECONDS_TO_SKIP_POP_SOUND; 
+        currentTime = time + SECONDS_TO_SKIP_POP_SOUND;
       }
 
       const ONE_SECOND_CHUNK_SIZE = self.wavInfo.sampleRate * self.wavInfo.nChannels * (self.wavInfo.bitsPerSample / 8);
@@ -361,8 +361,8 @@ class AudioPlayer {
       console.log("startIdx=", start);
       console.log("endIdx=", end);
       console.log("difference=", end - start);
-      console.log("difference%4=", (end - start)%4);
-      const fileSlice = AudioPlayer.audioFile.slice(start, end); 
+      console.log("difference%4=", (end - start) % 4);
+      const fileSlice = AudioPlayer.audioFile.slice(start, end);
 
       reader.readAsArrayBuffer(fileSlice);
       console.log("reader.readAsArrayBuffer(fileSlice)");
