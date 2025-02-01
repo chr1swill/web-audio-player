@@ -256,7 +256,6 @@ class ChunkedAudioPlayer {
         return;
       }
       reader.onload = function(e: Event): void {
-        //const currentTime = parseInt(self.scrollBar.value.trim() === "" ? "0" : self.scrollBar.value);
         if (!self.wavInfo) {
           console.error("self.wavInfo does not exist");
           self.isPlaying = false;
@@ -283,11 +282,12 @@ class ChunkedAudioPlayer {
         console.log("audio should be playing");
       }
 
-      const CHUNK_SIZE = 1024 * 1024;
+      const currentTime = parseInt(self.scrollBar.value.trim() === "" ? "0" : self.scrollBar.value);
+      const CHUNK_SIZE = 1024 * 1024 *2;
       const chunkDurationInSeconds = CHUNK_SIZE / (self.wavInfo.sampleRate * self.wavInfo.nChannels * (self.wavInfo.bitsPerSample / 8));
 
       //Byte Offset = Time in seconds * Sample Rate * Number of Channels * (Bits per Sample / 8)
-      const chunkByteOffset = chunkDurationInSeconds * self.wavInfo.sampleRate * self.wavInfo.nChannels * (self.wavInfo.bitsPerSample / 8);
+      const chunkByteOffset = currentTime * self.wavInfo.sampleRate * self.wavInfo.nChannels * (self.wavInfo.bitsPerSample / 8);
 
       const fileSlice = ChunkedAudioPlayer.audioFile.slice(
         self.wavInfo.idxOfDataChunkStart + chunkByteOffset, 
