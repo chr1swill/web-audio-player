@@ -51,8 +51,9 @@ p {
 }
 
 #time_keeper {
-  min-width: 370px;
-  height: 48px;
+  min-width: 200px;
+  padding: 8px 16px;
+  height: 40px;
   background-color: white;
   display: flex;
   flex-direction: row;
@@ -92,4 +93,25 @@ p {
   flex-direction: row;
   justify-content: flex-start;
   align-items: center;
+}
+
+#audio_controls {
+  width: 100%;
+  height: 48px;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+}
+
+#audio_controls > button {
+  font-weight: bold;
+  font-size: 18px;
+  color: black;
+  background-color: white;
+  border-radius:25px;
+  border: none;
+  padding: 8px;
+  margin-bottom: 16px;
 }

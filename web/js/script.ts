@@ -223,13 +223,6 @@ class ChunkedAudioPlayer {
    * @param {AsyncSourceNode} node - should not have start called but have a buffer set
    */
   public async addSource(node: AsyncSourceNode): Promise<void> {
-    //while (this.queue.length >= this.capacity) {
-    //  console.log("I AM BLOCKING");
-    //  await new Promise((resolve) => {
-    //    node.resolve = resolve;
-    //    this.queue.push(node);
-    //  });
-    //}
     if (this.queue.length >= this.capacity) {
       // don't resolve the the node yet
     } else {
