@@ -173,10 +173,22 @@ class TimeKeeper {
   }
 }
 
+type AsyncSourceNode = {
+  source: AudioBufferSourceNode,
+  audioDuration: number,
+  resolve?: (value?: unknown) => void,
+}
+
+function makeAsyncSourceNode(
+  source: AudioBufferSourceNode,
+  audioDuration: number
+): AsyncSourceNode {
+  return { source: source, audioDuration: audioDuration };
+}
+
 class ChunkedAudioPlayer {
-  private sources: AudioBufferSourceNode[] = []
+  private queue: AsyncSourceNode[] = []
   private capacity: Readonly<number>;
-  private length: number = 0;
   private lastSourceEndTime = 0;
 
   constructor(capacity: number) {
@@ -184,36 +196,41 @@ class ChunkedAudioPlayer {
   }
 
   /**
-   * @param {AudioBufferSourceNode} source - should not have start called but have a buffer set
-   * @param {number} audioDuration - the duaration of the audioBuffer the source holds
+   * @param {AsyncSourceNode} node - should not have start called but have a buffer set
    */
-  public addSource(source: AudioBufferSourceNode, audioDuration: number): void {
-    if (this.length === this.capacity) {
-      console.error("cannot add another source, capacity was hit: ", this.capacity);
-      return;
+  public async addSource(node: AsyncSourceNode): Promise<void> {
+    console.log("this.queue.length=",this.queue.length);
+
+    while (this.queue.length >= this.capacity) {
+      console.log("I AM BLOCKING");
+      await new Promise((resolve) => {
+        node.resolve = resolve;
+        this.queue.push(node);
+      });
     }
 
-    source.onended = (e: Event) => {
+    node.source.onended = (e: Event) => {
       TimeKeeper.incrementCurrentTime();
-      this.sources.splice(this.sources.indexOf(source), 1);
-      this.length--;
+      if (this.queue.length > 0) {
+        const item = this.queue.shift();
+        if (item != undefined && item.resolve) item.resolve();
+      }
     }
 
-    source.start(this.lastSourceEndTime)
-    this.lastSourceEndTime += audioDuration;
+    node.source.start(this.lastSourceEndTime)
+    this.lastSourceEndTime += node.audioDuration;
 
-    this.sources.push(source)
-    this.length++;
+    this.queue.push(node);
+    console.log("this.queue.length=",this.queue.length);
   }
 
   public reset(): void {
-    for (let i = 0; i < this.sources.length; i++) {
-      this.sources[i].onended = null;
-      this.sources[i].disconnect();
+    for (let i = 0; i < this.queue.length; i++) {
+      this.queue[i].source.onended = null;
+      this.queue[i].source.disconnect();
     }
 
-    this.sources = [];
-    this.length = 0;
+    this.queue = [];
     this.lastSourceEndTime = 0;
   }
 }
@@ -283,12 +300,84 @@ class AudioPlayer {
       reader.readAsArrayBuffer(slice);
     }
 
-    AudioPlayer.playBtn.onclick = function(e: Event): void {
+    AudioPlayer.playBtn.onclick = async function(e: Event): Promise<void> {
       if (self.isPlaying === true) {
         console.log("self.playBtn click event fired while audio isPlaying === true");
         return;
       }
-      self.playBtnClickHanlder(e, self);
+
+      if (!self.wavInfo) {
+        console.error("self.wavInfo does not exist");
+        self.isPlaying = false;
+        return;
+      }
+      self.isPlaying = true;
+      console.log("self.isPlaying = true");
+
+      AudioPlayer.audioCtx = new AudioContext({ sampleRate: self.wavInfo.sampleRate });
+      const startTime = TimeKeeper.getCurrentTime();
+
+      for (let i = 0; i < (self.wavInfo.durationInSeconds - startTime)/*10*/; i++) {
+        await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onerror = function(e: Event): void {
+            console.error("reading audio file data to play sound: ", reader.error);
+            self.isPlaying = false;
+            return;
+          }
+          reader.onload = async function(e: Event): Promise<void> {
+            if (!self.wavInfo) {
+              console.error("self.wavInfo does not exist");
+              self.isPlaying = false;
+              return;
+            }
+
+            const slice = new Float32Array(reader.result as ArrayBuffer);
+
+            const audioBuffer = AudioPlayer.audioCtx.createBuffer(self.wavInfo.nChannels, slice.length, self.wavInfo.sampleRate);
+            audioBuffer.getChannelData(0).set(slice);
+
+            const source = AudioPlayer.audioCtx.createBufferSource();
+            source.buffer = audioBuffer;
+            source.connect(AudioPlayer.audioCtx.destination);
+
+            await AudioPlayer.cap.addSource({ source: source, audioDuration: audioBuffer.duration, resolve: resolve });
+          }
+
+          // when I don't add the 0.01 seconds there is a weird poping sound the plays before the audio
+          // anything less then 0.01 and the audio turns into loud static sounds
+          // anything more then audio skips to far forward
+          const SECONDS_TO_SKIP_POP_SOUND = 0.01;
+          const time = startTime + i;
+
+          let currentTime: number;
+          if (time !== 0) {
+            currentTime = time;
+          } else {
+            currentTime = time + SECONDS_TO_SKIP_POP_SOUND;
+          }
+
+          if (!self.wavInfo) {
+            console.error("wave info was null");
+            reject();
+            return;
+          }
+
+          const ONE_SECOND_CHUNK_SIZE = self.wavInfo.sampleRate * self.wavInfo.nChannels * (self.wavInfo.bitsPerSample / 8);
+          const chunkByteOffset = currentTime * ONE_SECOND_CHUNK_SIZE;
+
+          const start = self.wavInfo.idxOfDataChunkStart + chunkByteOffset;
+          const end = start + ONE_SECOND_CHUNK_SIZE;
+          console.log("startIdx=", start);
+          console.log("endIdx=", end);
+          console.log("difference=", end - start);
+          console.log("difference%4=", (end - start) % 4);
+          const fileSlice = AudioPlayer.audioFile.slice(start, end);
+
+          reader.readAsArrayBuffer(fileSlice);
+          console.log("reader.readAsArrayBuffer(fileSlice)");
+        });
+      } 
     }
 
     AudioPlayer.pauseBtn.onclick = function(e: Event): void {
@@ -299,73 +388,6 @@ class AudioPlayer {
       self.isPlaying = false;
 
       AudioPlayer.cap.reset()
-    }
-  }
-
-  private playBtnClickHanlder(e: Event, self: AudioPlayer): void {
-    if (!self.wavInfo) {
-      console.error("self.wavInfo does not exist");
-      self.isPlaying = false;
-      return;
-    }
-    self.isPlaying = true;
-    console.log("self.isPlaying = true");
-
-    AudioPlayer.audioCtx = new AudioContext({ sampleRate: self.wavInfo.sampleRate });
-    const startTime = TimeKeeper.getCurrentTime();
-
-    for (let i = 0; i < /*(self.wavInfo.durationInSeconds - startTime)*/ 10; i++) {
-      const reader = new FileReader();
-      reader.onerror = function(e: Event): void {
-        console.error("reading audio file data to play sound: ", reader.error);
-        self.isPlaying = false;
-        return;
-      }
-      reader.onload = function(e: Event): void {
-        if (!self.wavInfo) {
-          console.error("self.wavInfo does not exist");
-          self.isPlaying = false;
-          return;
-        }
-
-        const slice = new Float32Array(reader.result as ArrayBuffer);
-
-        const audioBuffer = AudioPlayer.audioCtx.createBuffer(self.wavInfo.nChannels, slice.length, self.wavInfo.sampleRate);
-        audioBuffer.getChannelData(0).set(slice);
-
-        const source = AudioPlayer.audioCtx.createBufferSource();
-        source.buffer = audioBuffer;
-        source.connect(AudioPlayer.audioCtx.destination);
-
-        AudioPlayer.cap.addSource(source, audioBuffer.duration);
-      }
-
-      // when I don't add the 0.01 seconds there is a weird poping sound the plays before the audio
-      // anything less then 0.01 and the audio turns into loud static sounds
-      // anything more then audio skips to far forward
-      const SECONDS_TO_SKIP_POP_SOUND = 0.01;
-      const time = startTime + i;
-
-      let currentTime: number;
-      if (time !== 0) {
-        currentTime = time;
-      } else {
-        currentTime = time + SECONDS_TO_SKIP_POP_SOUND;
-      }
-
-      const ONE_SECOND_CHUNK_SIZE = self.wavInfo.sampleRate * self.wavInfo.nChannels * (self.wavInfo.bitsPerSample / 8);
-      const chunkByteOffset = currentTime * ONE_SECOND_CHUNK_SIZE;
-
-      const start = self.wavInfo.idxOfDataChunkStart + chunkByteOffset;
-      const end = start + ONE_SECOND_CHUNK_SIZE;
-      console.log("startIdx=", start);
-      console.log("endIdx=", end);
-      console.log("difference=", end - start);
-      console.log("difference%4=", (end - start) % 4);
-      const fileSlice = AudioPlayer.audioFile.slice(start, end);
-
-      reader.readAsArrayBuffer(fileSlice);
-      console.log("reader.readAsArrayBuffer(fileSlice)");
     }
   }
 
