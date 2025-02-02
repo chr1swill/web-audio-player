@@ -342,7 +342,9 @@ class AudioPlayer {
             source.buffer = audioBuffer;
             source.connect(AudioPlayer.audioCtx.destination);
 
+            console.log("iteration=", i);
             await AudioPlayer.cap.addSource({ source: source, audioDuration: audioBuffer.duration, resolve: resolve });
+
           }
 
           // when I don't add the 0.01 seconds there is a weird poping sound the plays before the audio
