@@ -131,17 +131,55 @@ class TimeKeeper {
   private static durationEl = getElementById("tk_duration") as HTMLParagraphElement;
   private static scrollBar = getElementById("tk_bar") as HTMLInputElement;
 
+  private static tm = -1;
+  private static buffering: boolean = false;
+
   constructor() { 
     TimeKeeper.scrollBar.oninput = function(e: Event): void {
-      if (AudioPlayer.playing()) {
-        AudioPlayer.pause();
-        const tm = setTimeout(function() {
-          clearTimeout(tm);
+      const TIME = 1000;
+
+      if (TimeKeeper.buffering) {
+        if (TimeKeeper.tm !== -1) clearTimeout(TimeKeeper.tm);
+        TimeKeeper.tm = setTimeout(function() {
+          clearTimeout(TimeKeeper.tm);
           AudioPlayer.play();
-        }, 1000);
+          TimeKeeper.buffering = false;
+        }, TIME);
+
+        TimeKeeper.currentTimeSync();
+        return;
+      }
+
+      if (AudioPlayer.playing()) {
+
+        AudioPlayer.pause();
+        TimeKeeper.buffering = true;
+
+        if (TimeKeeper.tm !== -1) clearTimeout(TimeKeeper.tm);
+        TimeKeeper.tm = setTimeout(function() {
+          clearTimeout(TimeKeeper.tm);
+          AudioPlayer.play();
+          TimeKeeper.buffering = false;
+        }, TIME);
+
       } else {
         TimeKeeper.currentTimeSync();
       }
+
+      //if (TimeKeeper.buffering) {
+      //}
+
+      //if (AudioPlayer.playing()) {
+      //  if (TimeKeeper.tm !== -1) clearTimeout(TimeKeeper.tm);
+      //  AudioPlayer.pause();
+
+      //  TimeKeeper.tm = setTimeout(function() {
+      //    clearTimeout(TimeKeeper.tm);
+      //    AudioPlayer.play();
+      //  }, 2000);
+      //} else {
+      //  TimeKeeper.currentTimeSync();
+      //}
     }
   }
 
