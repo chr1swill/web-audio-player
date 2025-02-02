@@ -165,21 +165,6 @@ class TimeKeeper {
       } else {
         TimeKeeper.currentTimeSync();
       }
-
-      //if (TimeKeeper.buffering) {
-      //}
-
-      //if (AudioPlayer.playing()) {
-      //  if (TimeKeeper.tm !== -1) clearTimeout(TimeKeeper.tm);
-      //  AudioPlayer.pause();
-
-      //  TimeKeeper.tm = setTimeout(function() {
-      //    clearTimeout(TimeKeeper.tm);
-      //    AudioPlayer.play();
-      //  }, 2000);
-      //} else {
-      //  TimeKeeper.currentTimeSync();
-      //}
     }
   }
 
