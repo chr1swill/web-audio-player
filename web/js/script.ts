@@ -131,7 +131,19 @@ class TimeKeeper {
   private static durationEl = getElementById("tk_duration") as HTMLParagraphElement;
   private static scrollBar = getElementById("tk_bar") as HTMLInputElement;
 
-  constructor() { }
+  constructor() { 
+    TimeKeeper.scrollBar.oninput = function(e: Event): void {
+      if (AudioPlayer.playing()) {
+        AudioPlayer.pause();
+        const tm = setTimeout(function() {
+          clearTimeout(tm);
+          AudioPlayer.play();
+        }, 1000);
+      } else {
+        TimeKeeper.currentTimeSync();
+      }
+    }
+  }
 
   static loadingState(): void {
     TimeKeeper.scrollBar.setAttribute("disabled", "");
@@ -163,7 +175,18 @@ class TimeKeeper {
 
   static setCurrentTime(currentTime: number) {
     TimeKeeper.scrollBar.value = String(currentTime);
-    TimeKeeper.currentTimeEl.textContent = DurationManager.format(DurationManager.new(currentTime));;
+    TimeKeeper.currentTimeEl.textContent = DurationManager.format(DurationManager.new(currentTime));
+  }
+
+  static currentTimeSync(): void {
+    TimeKeeper.currentTimeEl.textContent = 
+      DurationManager.format(
+        DurationManager.new(
+          parseInt(
+            TimeKeeper.scrollBar.value.trim() === "" ? "0" : TimeKeeper.scrollBar.value.trim()
+          )
+        )
+    );
   }
 
   static incrementCurrentTime() {
@@ -242,7 +265,11 @@ class AudioPlayer {
   private static playBtn = getElementById("ac_play") as HTMLButtonElement;
   private static pauseBtn = getElementById("ac_pause") as HTMLButtonElement;
 
-  private isPlaying = false;
+  private static isPlaying = false;
+
+  public static playing(): boolean {
+    return AudioPlayer.isPlaying;
+  }
 
   private static audioFile: File;
   private static audioCtx: AudioContext;
@@ -302,18 +329,18 @@ class AudioPlayer {
     }
 
     AudioPlayer.playBtn.onclick = async function(e: Event): Promise<void> {
-      if (self.isPlaying === true) {
+      if (AudioPlayer.isPlaying === true) {
         console.log("self.playBtn click event fired while audio isPlaying === true");
         return;
       }
 
       if (!self.wavInfo) {
         console.error("self.wavInfo does not exist");
-        self.isPlaying = false;
+        AudioPlayer.isPlaying = false;
         return;
       }
-      self.isPlaying = true;
-      console.log("self.isPlaying = true");
+      AudioPlayer.isPlaying = true;
+      console.log("AudioPlayer.isPlaying = true");
 
       AudioPlayer.audioCtx = new AudioContext({ sampleRate: self.wavInfo.sampleRate });
       const startTime = TimeKeeper.getCurrentTime();
@@ -323,13 +350,13 @@ class AudioPlayer {
           const reader = new FileReader();
           reader.onerror = function(e: Event): void {
             console.error("reading audio file data to play sound: ", reader.error);
-            self.isPlaying = false;
+            AudioPlayer.isPlaying = false;
             return;
           }
           reader.onload = async function(e: Event): Promise<void> {
             if (!self.wavInfo) {
               console.error("self.wavInfo does not exist");
-              self.isPlaying = false;
+              AudioPlayer.isPlaying = false;
               return;
             }
 
@@ -384,11 +411,11 @@ class AudioPlayer {
     }
 
     AudioPlayer.pauseBtn.onclick = function(e: Event): void {
-      if (self.isPlaying === false) {
+      if (AudioPlayer.isPlaying === false) {
         console.log("audio is not playing, cannot pause it.");
         return;
       }
-      self.isPlaying = false;
+      AudioPlayer.isPlaying = false;
 
       AudioPlayer.cap.reset()
     }
@@ -403,135 +430,17 @@ class AudioPlayer {
     AudioPlayer.playBtn.setAttribute("disabled", "");
     AudioPlayer.pauseBtn.setAttribute("disabled", "");
   }
+
+  public static play(): void {
+    AudioPlayer.playBtn.click();
+  }
+
+  public static pause(): void {
+    AudioPlayer.pauseBtn.click();
+  }
 }
 
 (function main() {
-  //const inputEl = getElementById("file_picker") as HTMLInputElement;
-  //const loaderEl = getElementById("tk_loader") as HTMLSpanElement;
-  //const timeContainerEl = getElementById("tk_time_container") as HTMLSpanElement;
-  //const currentTimeEl = getElementById("tk_current_time") as HTMLParagraphElement;
-  //const durationEl = getElementById("tk_duration") as HTMLParagraphElement;
-  //const barEl = getElementById("tk_bar") as HTMLInputElement;
-  //const playBtn = getElementById("ac_play") as HTMLButtonElement;
-  //const pauseBtn = getElementById("ac_pause") as HTMLButtonElement;
-
-  //let wavInfo: WavInfo;
-
-  //let audioContext: AudioContext;
-  //let audioBuffer: AudioBuffer;
-  //let audioArrayBuffer: ArrayBuffer;
-  //let audioFile: File;
-  //let sourceNode: AudioBufferSourceNode;
-
-  //let isPlaying: boolean = false;
-  //let currentOffset: number = 0;
-  //let startTime: number = 0;
-
-  //barEl.onchange = function(e: Event): void {
-  //  e.preventDefault();
-  //  if (barEl.hasAttribute("disabled")) {
-  //    return;
-  //  } else {
-  //    // change audio stuff we are playing
-  //    // TODO: investigate this formula and how it can be used to update the bar type efficently
-  //    //
-  //    // Byte Offset = Time in seconds * Sample Rate * Number of Channels * (Bits per Sample / 8)
-  //    //
-  //    // The byte offset is from the data chunk so the address of the data chunk for a file should
-  //    // be stored in a way the would not require searching for it everytime you want update this value
-  //    currentTimeEl.textContent = durationToString(secondsToDuration(parseInt(barEl.value)));
-  //  }
-  //}
-
-  //inputEl.onchange = function(e: Event): void {
-  //  setAudioControlsStateDisabled(playBtn, pauseBtn);
-  //  timeKeeperStateLoading(loaderEl, timeContainerEl);
-  //  console.log("input change event fired");
-
-  //  if (!(inputEl.files) ||
-  //    inputEl.files[0] === null ||
-  //    (inputEl.files[0].type !== "audio/wav" &&
-  //      inputEl.files[0].type !== "audio/x-wav")
-  //  ) {
-  //    console.error("loading file: did not receive a valid .wav file.");
-  //    console.log(`inputEl.files=(${inputEl.files})`);
-  //    console.log(`inputEl.files[0]=(${!inputEl.files || inputEl.files[0] === null ? null : inputEl.files[0]})`);
-  //    console.log(`inputEl.files[0].type=(${!inputEl.files || !inputEl.files[0] || !inputEl.files[0].type ? null : inputEl.files[0].type})`);
-  //    return;
-  //  } else {
-  //    audioFile = inputEl.files[0];
-  //    console.log("audioFile: ", audioFile);
-  //  }
-
-  //  audioContext = new AudioContext();
-  //  console.log("audioContext: ", audioContext);
-
-  //  const fileReader: FileReader = new FileReader();
-
-  //  fileReader.onerror = function(e: Event): void {
-  //    console.error("occured reading file: ", fileReader!.error);
-  //    return;
-  //  }
-
-  //  fileReader.onload = function(e: Event): void {
-  //    if (!fileReader.result) {
-  //      console.error("There was not property 'result' on fileReader obj: ", fileReader);
-  //      return;
-  //    }
-
-  //    console.log("before we create the array buffer in fileReader.onload");
-  //    audioArrayBuffer = fileReader.result as ArrayBuffer;
-  //    console.log("audioArrayBuffer: ", audioArrayBuffer);
-
-  //    wavInfo = getWavInfo(audioArrayBuffer);
-
-  //    timeKeeperStateLoaded(
-  //      loaderEl,
-  //      timeContainerEl,
-  //      currentTimeEl,
-  //      durationEl,
-  //      barEl,
-  //      { hours: 0, minutes: 0, seconds: 0 },
-  //      wavInfo.durationInSeconds
-  //    );
-
-  //    setAudioControlsStateReady(playBtn, pauseBtn);
-  //    return;
-  //  }
-
-  //  fileReader.readAsArrayBuffer(audioFile);
-  //};
-
-  //playBtn.onclick = function(e: Event): void {
-  //  if (isPlaying === true) {
-  //    console.log("Already playing");
-  //    return;
-  //  }
-  //  isPlaying = true;
-
-  //  audioContext = new AudioContext({ sampleRate: wavInfo.sampleRate });
-  //  const slice = new Float32Array(audioArrayBuffer.slice(0));
-
-  //  console.log("wavInfo.nChannels: ", wavInfo.nChannels);
-  //  audioBuffer = audioContext.createBuffer(wavInfo.nChannels, slice.length, wavInfo.sampleRate);
-  //  audioBuffer.getChannelData(0).set(slice);
-  //  console.log("audioBuffer: ", audioBuffer);
-  //  console.log("audioBuffer.duration: ", audioBuffer.duration);
-
-  //  sourceNode = audioContext.createBufferSource();
-  //  console.log("audioContext.destination: ", audioContext.destination);
-  //  sourceNode.buffer = audioBuffer;
-  //  sourceNode.connect(audioContext.destination);
-  //  sourceNode.onended = function(e: Event): void {
-  //    isPlaying = false;
-  //    console.log("audio should have ended");
-  //    return;
-  //  }
-
-  //  sourceNode.start(0);
-  //  console.log("audio should be playing");
-  //}
-
-  //pauseBtn.onclick = function(e: Event): void { }
   const ap = new AudioPlayer();
+  const tk = new TimeKeeper();
 })();
