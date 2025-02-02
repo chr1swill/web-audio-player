@@ -176,14 +176,15 @@ class TimeKeeper {
 type AsyncSourceNode = {
   source: AudioBufferSourceNode,
   audioDuration: number,
-  resolve?: (value?: unknown) => void,
+  resolve: (value?: unknown) => void,
 }
 
 function makeAsyncSourceNode(
   source: AudioBufferSourceNode,
-  audioDuration: number
+  audioDuration: number,
+  resolve: (value?: unknown) => void
 ): AsyncSourceNode {
-  return { source: source, audioDuration: audioDuration };
+  return { source: source, audioDuration: audioDuration, resolve: resolve };
 }
 
 class ChunkedAudioPlayer {
