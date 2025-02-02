@@ -134,7 +134,7 @@ class TimeKeeper {
   private static tm = -1;
   private static buffering: boolean = false;
 
-  constructor() { 
+  constructor() {
     TimeKeeper.scrollBar.oninput = function(e: Event): void {
       const TIME = 1000;
 
